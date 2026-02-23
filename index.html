@@ -145,53 +145,12 @@ function getRegion() {
 
 function readStorage() {
   if (!alt1) return alert("Alt1 not connected");
-
-  const reg = getRegion();
-  const status = document.getElementById('storageStatus');
-  status.textContent = "Capturing...";
-
-  alt1.capture(reg.x, reg.y, reg.w, reg.h, function(img) {
-
-    let updated = 0;
-
-    const COL_W = 74;
-    const ROW_H = 52;
-    const NUM_W = 45;
-    const NUM_H = 16;
-    const OFF_X = 25;
-    const OFF_Y = 8;
-
-    for (let i = 0; i < materialOrder.length; i++) {
-      const col = i % 5;
-      const row = Math.floor(i / 5);
-
-      const nx = col * COL_W + OFF_X;
-      const ny = row * ROW_H + OFF_Y;
-
-      if (nx + NUM_W > reg.w || ny + NUM_H > reg.h) continue;
-
-      const numStr = alt1.ocr.read(img, nx, ny, NUM_W, NUM_H, {
-        font: "small"
-      });
-
-      const count = parseInt((numStr || "").trim()) || 0;
-      const mat = materialOrder[i];
-
-      if (inventory[mat] !== count) {
-        inventory[mat] = count;
-        updated++;
-      }
-    }
-
-    saveData();
-    refreshInventory();
-
-    status.textContent = updated > 0
-      ? `Updated ${updated} materials!`
-      : "No changes detected";
+  
+  alt1.capture(0,0,100,100,function(img){
+    console.log("Capture callback fired", img);
+    alert("Capture fired!");
   });
 }
-
 function checkAlt1() {
   const el = document.getElementById("status");
   if (typeof alt1 !== "undefined") {
