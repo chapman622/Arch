@@ -84,12 +84,12 @@
     H: <input type="number" id="regH" /><br>
     <button onclick="saveRegion()">Save Region</button>
     <button onclick="readStorage()">Read Storage Now</button>
+    <button onclick="calcRegion(5)">Auto-Calc W/H</button>
     <p id="storageStatus">No region saved</p>
   </div>
 </div>
 
 <script>
-
 const materialOrder = [
   'Third Age iron','Samite silk','White oak','Goldrune','Orthenglass',
   'Vellum','Leather scraps','Soapstone','Animal furs','Fossilised bone',
@@ -146,11 +146,55 @@ function getRegion() {
 function readStorage() {
   if (!alt1) return alert("Alt1 not connected");
   
-  alt1.capture(0,0,100,100,function(img){
-    console.log("Capture callback fired", img);
-    alert("Capture fired!");
+  const reg = getRegion();
+  const status = document.getElementById('storageStatus');
+  status.textContent = "Capturing...";
+
+  alt1.capture(reg.x, reg.y, reg.w, reg.h, function(img){
+    if(!img) { status.textContent="Capture failed"; return; }
+
+    let updated = 0;
+    const COL_W = 74;
+    const ROW_H = 52;
+    const NUM_W = 45;
+    const NUM_H = 16;
+    const OFF_X = 25;
+    const OFF_Y = 8;
+
+    for (let i = 0; i < materialOrder.length; i++) {
+      const col = i % 5;
+      const row = Math.floor(i / 5);
+      const nx = col * COL_W + OFF_X;
+      const ny = row * ROW_H + OFF_Y;
+
+      if (nx + NUM_W > reg.w || ny + NUM_H > reg.h) continue;
+
+      const numStr = alt1.ocr.read(img, nx, ny, NUM_W, NUM_H);
+      const count = parseInt(numStr.trim()) || 0;
+      const mat = materialOrder[i];
+      if (inventory[mat] !== count) {
+        inventory[mat] = count;
+        updated++;
+      }
+    }
+
+    saveData();
+    refreshInventory();
+    status.textContent = updated>0 ? `Updated ${updated} materials!` : 'No changes detected';
   });
 }
+
+function calcRegion(cols=5, rows=null) {
+  if(!rows) rows = Math.ceil(materialOrder.length / cols);
+  const CELL_W = 74;
+  const CELL_H = 52;
+  const totalW = cols * CELL_W;
+  const totalH = rows * CELL_H;
+  document.getElementById('regW').value = totalW;
+  document.getElementById('regH').value = totalH;
+  alert(`Region size calculated: ${totalW}x${totalH} px for ${cols} cols × ${rows} rows`);
+}
+
 function checkAlt1() {
   const el = document.getElementById("status");
   if (typeof alt1 !== "undefined") {
@@ -166,7 +210,7 @@ loadData();
 refreshInventory();
 checkAlt1();
 setInterval(checkAlt1, 2000);
-
 </script>
+
 </body>
 </html>
