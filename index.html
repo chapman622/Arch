@@ -1,76 +1,119 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"/>
   <meta http-equiv="Pragma" content="no-cache"/>
   <meta http-equiv="Expires" content="0"/>
+  
+  <title>Archaeology Tracker v4</title>
+  
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+  
   <script src="https://www.unpkg.com/alt1/dist/base/index.js"></script>
   <script src="https://www.unpkg.com/alt1/dist/ocr/index.js"></script>
   <script src="https://www.unpkg.com/alt1/dist/chatbox/index.js"></script>
-  <title>Archaeology Tracker v3.1</title>
+  
   <style>
-    body { font-family: 'Orbitron', monospace; background: linear-gradient(135deg, #1a1a2e, #16213e, #0f3460); color: #e0e0e0; }
-    .app { max-width: 400px; margin: auto; padding: 10px; }
-    .tab { display: none; } .tab.active { display: block; }
-    .mat-card { background: rgba(0,50,100,0.8); border-radius: 8px; margin: 5px 0; padding: 8px; }
-    .progress { height: 20px; background: #333; border-radius: 10px; }
-    .status { position: fixed; top: 5px; right: 5px; background: rgba(0,0,0,0.7); padding: 5px; border-radius: 5px; font-size: 12px; }
-    button { background: linear-gradient(45deg, #667eea, #764ba2); border: none; color: white; padding: 8px 12px; border-radius: 5px; cursor: pointer; }
-    button:hover { transform: scale(1.05); }
-    input { background: #333; color: white; border: 1px solid #555; border-radius: 3px; padding: 4px; }
-    .culture-dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; margin-right: 5px; }
-    .zaros { background: purple; } .zamo { background: red; } .sara { background: blue; } .arma { background: green; } .bando { background: brown; } .dragon { background: orange; } .agnostic { background: gray; }
+    body {
+      font-family: 'Orbitron', monospace;
+      background: linear-gradient(135deg, #1a1a2e, #16213e, #0f3460);
+      color: #e0e0e0;
+      margin: 0;
+      padding: 10px;
+    }
+    .app { max-width: 400px; margin: auto; }
+    h2 { text-align: center; color: #a0d0ff; }
+    .tab { display: none; }
+    .tab.active { display: block; }
+    .btn-group { margin-bottom: 15px; }
+    .mat-card {
+      background: rgba(0, 50, 100, 0.7);
+      border-radius: 8px;
+      padding: 10px;
+      margin: 8px 0;
+      border: 1px solid #444;
+    }
+    .culture-dot {
+      width: 12px; height: 12px; border-radius: 50%; display: inline-block; margin-right: 6px;
+    }
+    .status {
+      position: fixed; top: 10px; right: 10px; background: rgba(0,0,0,0.7);
+      padding: 6px 12px; border-radius: 6px; font-size: 12px; z-index: 10;
+    }
+    button { margin: 4px; }
+    input[type="number"], input[type="text"] { width: 80px; background: #222; color: white; border: 1px solid #555; padding: 4px; border-radius: 4px; }
+    .progress { height: 8px; background: #333; border-radius: 4px; overflow: hidden; margin-top: 4px; }
+    .progress-bar { height: 100%; background: #4caf50; width: 0%; }
   </style>
 </head>
 <body>
+
   <div class="app">
-    <h2>🏺 Arch Tracker v3.1</h2>
-    <div class="status" id="status">Alt1: Loading...</div>
-    
-    <!-- Tabs -->
-    <div class="btn-group w-100 mb-3">
+    <h2>🏺 Archaeology Tracker v4</h2>
+    <div class="status" id="status">Alt1: Checking...</div>
+
+    <!-- Tabs navigation -->
+    <div class="btn-group btn-group-justified w-100">
       <button class="btn btn-primary tab-btn active" onclick="showTab('inventory')">Inventory</button>
       <button class="btn btn-primary tab-btn" onclick="showTab('goals')">Goals</button>
       <button class="btn btn-primary tab-btn" onclick="showTab('artefacts')">Artefacts</button>
       <button class="btn btn-primary tab-btn" onclick="showTab('session')">Session</button>
       <button class="btn btn-primary tab-btn" onclick="showTab('ocr')">OCR</button>
     </div>
-    
+
+    <!-- Inventory Tab -->
     <div id="inventory" class="tab active">
-      <input id="searchInv" placeholder="Search mats..." oninput="filterMats('inv')">
+      <input type="text" id="searchInv" placeholder="Search materials..." style="width:100%; margin-bottom:10px;" oninput="refreshInventory()">
       <div id="invList"></div>
     </div>
-    
+
+    <!-- Goals Tab -->
     <div id="goals" class="tab">
-      <button onclick="bulkGoal(100)">Set All 100</button> <button onclick="bulkGoal(500)">500</button> <button onclick="bulkGoal(1000)">1k</button>
+      <button onclick="bulkSetGoal(100)">All 100</button>
+      <button onclick="bulkSetGoal(500)">All 500</button>
+      <button onclick="bulkSetGoal(1000)">All 1k</button>
       <div id="goalList"></div>
     </div>
-    
-    <!-- Artefacts tab: unchanged from v2, cards with restore btn deducting mats -->
+
+    <!-- Artefacts Tab (placeholder - expand with real data) -->
     <div id="artefacts" class="tab">
-      <input id="searchArt" placeholder="Filter artefacts..." oninput="filterArts()">
-      <div id="artList"></div>
+      <div id="artList">Artefact restoration coming soon...</div>
     </div>
-    
+
+    <!-- Session Tab -->
     <div id="session" class="tab">
       <button id="timerBtn" onclick="toggleTimer()">Start Session</button>
-      <div id="sessionStats">XP: 0 | XP/hr: -- | Mats Gained: 0</div>
+      <div id="sessionStats">XP: 0 | Rate: -- xp/hr | Restores: 0</div>
       <div id="sessionLog"></div>
     </div>
-    
+
+    <!-- OCR Tab -->
     <div id="ocr" class="tab">
-      <button onclick="readChat()">Scan Chat (Auto Mats)</button>
-      <button onclick="readStorage()">🆕 Read Storage (Full OCR!)</button>
-      <textarea id="manualPaste" placeholder="Paste chat/text... (e.g. 'You find 5 Third Age iron')" rows="3"></textarea>
-      <button onclick="parseManual()">Parse & Add</button>
-      <div id="ocrStatus">Ready</div>
+      <h5>Chat OCR (auto +1 on excavate)</h5>
+      <button onclick="scanChat()">Scan Chat Now</button>
+      <p id="chatStatus">Ready</p>
+
+      <h5>Material Storage OCR (manual coords)</h5>
+      <p>Use Alt+2 in Alt1 → drag over grid → copy X/Y/W/H from preview</p>
+      <div>
+        X: <input type="number" id="regX" min="0" />
+        Y: <input type="number" id="regY" min="0" />
+      </div>
+      <div>
+        Width: <input type="number" id="regW" min="100" />
+        Height: <input type="number" id="regH" min="100" />
+      </div>
+      <button onclick="saveRegion()">Save Region</button>
+      <button onclick="readStorage()">Read Storage Now</button>
+      <p id="storageStatus">No region saved</p>
     </div>
   </div>
 
   <script>
-    // Full material order (wiki culture sort = storage grid order!)
+    // === Data ===
     const materialOrder = [
       'Third Age iron', 'Samite silk', 'White oak', 'Goldrune', 'Orthenglass',
       'Vellum', 'Leather scraps', 'Soapstone', 'Animal furs', 'Fossilised bone',
@@ -81,160 +124,206 @@
       'Cadmium red', 'Chaotic brimstone', 'Demonhide', 'Eye of Dagon', 'Hellfire metal',
       'Zarosian insignia', 'Imperial steel', 'Ancient vis', 'Tyrian purple', 'Blood of Orcus'
     ];
-    const NUM_MATS = materialOrder.length; // 40
-
-    // Header detection for scroll pos
-    const headerMap = {
-      'Agnostic materials': 0,
-      'Armadylean materials': 10,
-      'Bandosian materials': 15,
-      'Dragonkin materials': 20,
-      'Saradominist materials': 25,
-      'Zamorakian materials': 30,
-      'Zarosian materials': 35
-    };
-    const HEADER_YS = [12, 82, 152, 222, 292, 362, 432]; // Tuned relative Ys (adjust if needed)
-    const HEADER_BOX = {w: 200, h: 20}; // Header text bbox
-
-    // OCR params (RS3 tuned)
-    const COL_WIDTH = 74;
-    const ROW_HEIGHT = 52;
-    const NUM_BOX = {w: 45, h: 16};
-    const NUM_OFFSET_X = 25;
-    const NUM_OFFSET_Y = 8;
-
-    // Cultures for dots/UI (simplified)
-    const cultureColors = {0: 'agnostic', 10:'arma', 15:'bando', 20:'dragon', 25:'sara', 30:'zamo', 35:'zaros'};
 
     let inventory = {};
     let goals = {};
-    let session = {start:0, xp:0, matsGained:{}, restores:0};
-    let savedRegion = null;
+    let session = { active: false, startTime: 0, xp: 0 };
 
-    // Init
-    A1lib.identifyApp('appconfig.json');
-    loadData();
-    initAlt1();
-    buildUI();
-    setInterval(refreshUI, 1000);
+    materialOrder.forEach(mat => {
+      inventory[mat] = 0;
+      goals[mat] = 0;
+    });
 
-    function initAlt1() {
-      if (alt1) {
-        document.getElementById('status').innerHTML = 'Alt1 ✔';
-        document.getElementById('status').style.color = 'lime';
+    // === Load / Save ===
+    function loadData() {
+      const data = JSON.parse(localStorage.getItem('archTracker') || '{}');
+      Object.assign(inventory, data.inventory || {});
+      Object.assign(goals, data.goals || {});
+      Object.assign(session, data.session || {});
+      const reg = data.region;
+      if (reg) {
+        document.getElementById('regX').value = reg.x || '';
+        document.getElementById('regY').value = reg.y || '';
+        document.getElementById('regW').value = reg.w || '';
+        document.getElementById('regH').value = reg.h || '';
+        document.getElementById('storageStatus').textContent = `Region saved (${reg.x},${reg.y} ${reg.w}x${reg.h})`;
       }
     }
 
-    function loadData() {
-      const saved = localStorage.archData ? JSON.parse(localStorage.archData) : {};
-      materialOrder.forEach((mat, i) => {
-        inventory[mat] = saved.inventory?.[mat] || 0;
-        goals[mat] = saved.goals?.[mat] || 0;
-      });
-      session = {...session, ...saved.session};
-    }
-
     function saveData() {
-      localStorage.archData = JSON.stringify({inventory, goals, session});
+      localStorage.setItem('archTracker', JSON.stringify({ inventory, goals, session, region: getRegion() }));
     }
 
-    // UI Builders (abbrev: inventory/goals/arts/session lists with +-/progress/restore/etc.)
-    function buildUI() { refreshInventory(); refreshGoals(); /* etc. */ }
-    function refreshInventory() { /* filter/search, cards w/ +/- input, progress to goal */ }
-    // ... (full impl from v2: artefact cards w/ level/XP/mats needed green/red, restore deducts & logs XP)
+    function getRegion() {
+      return {
+        x: parseInt(document.getElementById('regX').value) || 0,
+        y: parseInt(document.getElementById('regY').value) || 0,
+        w: parseInt(document.getElementById('regW').value) || 400,
+        h: parseInt(document.getElementById('regH').value) || 600
+      };
+    }
 
-    function showTab(tab) {
+    function saveRegion() {
+      saveData();
+      document.getElementById('storageStatus').textContent = 'Region saved!';
+    }
+
+    // === UI Helpers ===
+    function showTab(tabId) {
       document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
       document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-      document.getElementById(tab).classList.add('active');
-      event.target.classList.add('active');
-      if (tab === 'ocr') readChat(); // Auto-scan on tab
+      document.getElementById(tabId).classList.add('active');
+      document.querySelector(`button[onclick="showTab('${tabId}')"]`).classList.add('active');
+      if (tabId === 'inventory') refreshInventory();
+      if (tabId === 'goals') refreshGoals();
     }
 
-    // OCR: Chat (v2)
-    function readChat() {
+    function refreshInventory() {
+      const search = document.getElementById('searchInv').value.toLowerCase();
+      const list = document.getElementById('invList');
+      list.innerHTML = '';
+      materialOrder.forEach(mat => {
+        if (search && !mat.toLowerCase().includes(search)) return;
+        const count = inventory[mat] || 0;
+        const goal = goals[mat] || 0;
+        const pct = goal > 0 ? Math.min(100, Math.floor(count / goal * 100)) : 0;
+        const div = document.createElement('div');
+        div.className = 'mat-card';
+        div.innerHTML = `
+          <strong>${mat}</strong>: ${count} ${goal > 0 ? `/ ${goal}` : ''}
+          <div class="progress"><div class="progress-bar" style="width:${pct}%"></div></div>
+          <button onclick="addMat('${mat}',1)">+1</button>
+          <button onclick="addMat('${mat}',-1)">-1</button>
+        `;
+        list.appendChild(div);
+      });
+    }
+
+    function refreshGoals() {
+      const list = document.getElementById('goalList');
+      list.innerHTML = '';
+      materialOrder.forEach(mat => {
+        const goal = goals[mat] || 0;
+        if (goal === 0) return;
+        const count = inventory[mat] || 0;
+        const div = document.createElement('div');
+        div.className = 'mat-card';
+        div.innerHTML = `${mat}: ${count} / ${goal}`;
+        list.appendChild(div);
+      });
+    }
+
+    function addMat(mat, delta) {
+      inventory[mat] = Math.max(0, (inventory[mat] || 0) + delta);
+      saveData();
+      refreshInventory();
+    }
+
+    function bulkSetGoal(qty) {
+      materialOrder.forEach(mat => goals[mat] = qty);
+      saveData();
+      refreshGoals();
+    }
+
+    function toggleTimer() {
+      // Placeholder - expand with real timer logic
+      alert('Session timer started (placeholder)');
+    }
+
+    // === Alt1 Detection ===
+    function checkAlt1() {
+      const el = document.getElementById('status');
+      if (typeof alt1 !== 'undefined' && alt1) {
+        el.innerHTML = 'Alt1 ✔ Connected';
+        el.style.color = 'lime';
+      } else {
+        el.innerHTML = 'Alt1 not detected';
+        el.style.color = 'orange';
+      }
+    }
+
+    // === Chat OCR (+1 on excavate) ===
+    function scanChat() {
+      if (!alt1) return alert('Alt1 not connected');
       const reader = new Chatbox.default();
-      reader.readargs = {colors: [A1lib.mixColor(255,255,255)], /* white text */ };
+      reader.readargs = { colors: [A1lib.mixColor(255,255,255)] }; // white text
       reader.read();
-      const lines = reader.result.lines;
+      const lines = reader.result?.lines || [];
       let added = 0;
       lines.forEach(line => {
-        const match = line.match(/You find some? (\d+)? (.+)/i);
+        const match = line.text.match(/You find (?:some )?(\d+)? ?(.+?)(?:\.|$)/i);
         if (match) {
           const qty = parseInt(match[1]) || 1;
-          const mat = match[2].trim();
-          const idx = materialOrder.indexOf(mat);
-          if (idx > -1) {
-            inventory[materialOrder[idx]] += qty;
-            session.matsGained[mat] = (session.matsGained[mat] || 0) + qty;
-            added++;
+          let mat = match[2].trim();
+          // Fuzzy match to our list (improve as needed)
+          const found = materialOrder.find(m => m.toLowerCase().includes(mat.toLowerCase()));
+          if (found) {
+            inventory[found] = (inventory[found] || 0) + qty;
+            added += qty;
           }
         }
       });
-      refreshUI();
-      document.getElementById('ocrStatus').innerHTML = `Chat: +${added} mats`;
-    }
-
-    // 🆕 Storage OCR (star!)
-    function readStorage() {
-      if (!alt1) return alert('Alt1 needed!');
-      document.getElementById('ocrStatus').innerHTML = 'Pick region over visible grid...';
-      
-      alt1.pickRegion((region) => {
-        if (!region) return;
-        savedRegion = region; // Save for next
-        const img = alt1.captureArea(region.x, region.y, region.width, region.height);
-        
-        // Step 1: Detect scroll pos via headers
-        let startIdx = 0;
-        for (let h=0; h<HEADER_YS.length; h++) {
-          const hy = HEADER_YS[h];
-          if (hy + HEADER_BOX.h > region.height) break;
-          const headerText = alt1.ocr.read(img, 0, hy, Math.min(HEADER_BOX.w, region.width), HEADER_BOX.h);
-          const norm = headerText.toLowerCase().trim().replace(/materials?/g, 'materials');
-          const key = Object.keys(headerMap).find(k => norm.includes(k.toLowerCase()));
-          if (key) {
-            startIdx = headerMap[key];
-            break;
-          }
-        }
-        
-        // Step 2: Read numbers
-        let readCount = 0;
-        for (let idx = startIdx; idx < NUM_MATS; idx++) {
-          const col = (idx % 5);
-          const row = Math.floor(idx / 5);
-          const nx = col * COL_WIDTH + NUM_OFFSET_X;
-          const ny = row * ROW_HEIGHT + NUM_OFFSET_Y;
-          if (ny + NUM_BOX.h > region.height) break; // Out of view
-          
-          const numStr = alt1.ocrNumber.read(img, nx, ny, NUM_BOX.w, NUM_BOX.h);
-          const count = parseInt(numStr) || 0;
-          const mat = materialOrder[idx];
-          if (inventory[mat] !== count) { // Changed
-            inventory[mat] = count;
-            readCount++;
-          }
-        }
-        
-        refreshUI();
+      if (added > 0) {
         saveData();
-        document.getElementById('ocrStatus').innerHTML = `✅ Read ${readCount} mats from storage (start: #${startIdx+1})`;
+        refreshInventory();
+        document.getElementById('chatStatus').textContent = `Added ${added} materials!`;
+      } else {
+        document.getElementById('chatStatus').textContent = 'No new materials found in chat';
+      }
+    }
+
+    // === Storage OCR (using saved coords) ===
+    function readStorage() {
+      if (!alt1) return alert('Alt1 not connected');
+      const reg = getRegion();
+      if (reg.w < 100 || reg.h < 100) return alert('Set valid region first (use Alt+2 to get coords)');
+
+      const status = document.getElementById('storageStatus');
+      status.textContent = 'Capturing...';
+
+      alt1.captureHold(function(img) {
+        let updated = 0;
+        const COL_W = 74;   // Tune these based on your screenshot
+        const ROW_H = 52;
+        const NUM_W = 45;
+        const NUM_H = 16;
+        const OFF_X = 25;
+        const OFF_Y = 8;
+
+        for (let i = 0; i < materialOrder.length; i++) {
+          const col = i % 5;
+          const row = Math.floor(i / 5);
+          const nx = reg.x + col * COL_W + OFF_X;
+          const ny = reg.y + row * ROW_H + OFF_Y;
+
+          // Check if within captured area
+          if (nx + NUM_W > reg.x + reg.w || ny + NUM_H > reg.y + reg.h) continue;
+
+          const numStr = alt1.ocr.read(img, nx - reg.x, ny - reg.y, NUM_W, NUM_H); // relative to capture
+          const count = parseInt(numStr.trim()) || 0;
+          const mat = materialOrder[i];
+          if (inventory[mat] !== count) {
+            inventory[mat] = count;
+            updated++;
+          }
+        }
+
+        saveData();
+        refreshInventory();
+        status.textContent = updated > 0 ? `Updated ${updated} materials!` : 'No changes detected';
       });
     }
 
-    // Manual parse (v2)
-    function parseManual() {
-      const text = document.getElementById('manualPaste').value;
-      // Regex for "5 Third Age iron" etc., add to inv
-      // ...
-    }
+    // Init
+    loadData();
+    checkAlt1();
+    refreshInventory();
+    setInterval(checkAlt1, 2000); // Re-check Alt1 connection
 
-    // Other fns: bulkGoal, toggleTimer (persists), restoreArt (deduct mats, add XP), filter, etc. (full v2 impl)
-    function refreshUI() { saveData(); /* update all tabs/status */ }
-
-    // Artefacts data (v2: ~40+ with recipes, sites, levels, XP)
-    const artefacts = [ /* full from v2 wiki data */ ];
+    // Auto-scan chat every 10s when OCR tab open (optional)
+    setInterval(() => {
+      if (document.getElementById('ocr').classList.contains('active')) scanChat();
+    }, 10000);
   </script>
 </body>
 </html>
