@@ -1,0 +1,10 @@
+{
+  "appName": "Archaeology Material Tracker",
+  "startFile": "index.html",
+  "iconUrl": "icon.png",
+  "settingsFile": "",
+  "description": "Track your RS3 Archaeology materials, set goals, and monitor progress toward artefact restoration.",
+  "hasargs": false,
+  "width": 380,
+  "height": 520
+}
