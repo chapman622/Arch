@@ -10,7 +10,7 @@
   <title>Archaeology Tracker v4</title>
   
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
   
   <script src="https://www.unpkg.com/alt1/dist/base/index.js"></script>
   <script src="https://www.unpkg.com/alt1/dist/ocr/index.js"></script>
@@ -36,294 +36,178 @@
       margin: 8px 0;
       border: 1px solid #444;
     }
-    .culture-dot {
-      width: 12px; height: 12px; border-radius: 50%; display: inline-block; margin-right: 6px;
-    }
     .status {
-      position: fixed; top: 10px; right: 10px; background: rgba(0,0,0,0.7);
-      padding: 6px 12px; border-radius: 6px; font-size: 12px; z-index: 10;
+      position: fixed; top: 10px; right: 10px;
+      background: rgba(0,0,0,0.7);
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      z-index: 10;
+    }
+    .progress {
+      height: 8px;
+      background: #333;
+      border-radius: 4px;
+      overflow: hidden;
+      margin-top: 4px;
+    }
+    .progress-bar {
+      height: 100%;
+      background: #4caf50;
+      width: 0%;
     }
     button { margin: 4px; }
-    input[type="number"], input[type="text"] { width: 80px; background: #222; color: white; border: 1px solid #555; padding: 4px; border-radius: 4px; }
-    .progress { height: 8px; background: #333; border-radius: 4px; overflow: hidden; margin-top: 4px; }
-    .progress-bar { height: 100%; background: #4caf50; width: 0%; }
+    input { width: 80px; background: #222; color: white; border: 1px solid #555; padding: 4px; border-radius: 4px; }
   </style>
 </head>
 <body>
 
-  <div class="app">
-    <h2>🏺 Archaeology Tracker v4</h2>
-    <div class="status" id="status">Alt1: Checking...</div>
+<div class="app">
+  <h2>🏺 Archaeology Tracker v4</h2>
+  <div class="status" id="status">Alt1: Checking...</div>
 
-    <!-- Tabs navigation -->
-    <div class="btn-group btn-group-justified w-100">
-      <button class="btn btn-primary tab-btn active" onclick="showTab('inventory')">Inventory</button>
-      <button class="btn btn-primary tab-btn" onclick="showTab('goals')">Goals</button>
-      <button class="btn btn-primary tab-btn" onclick="showTab('artefacts')">Artefacts</button>
-      <button class="btn btn-primary tab-btn" onclick="showTab('session')">Session</button>
-      <button class="btn btn-primary tab-btn" onclick="showTab('ocr')">OCR</button>
-    </div>
-
-    <!-- Inventory Tab -->
-    <div id="inventory" class="tab active">
-      <input type="text" id="searchInv" placeholder="Search materials..." style="width:100%; margin-bottom:10px;" oninput="refreshInventory()">
-      <div id="invList"></div>
-    </div>
-
-    <!-- Goals Tab -->
-    <div id="goals" class="tab">
-      <button onclick="bulkSetGoal(100)">All 100</button>
-      <button onclick="bulkSetGoal(500)">All 500</button>
-      <button onclick="bulkSetGoal(1000)">All 1k</button>
-      <div id="goalList"></div>
-    </div>
-
-    <!-- Artefacts Tab (placeholder - expand with real data) -->
-    <div id="artefacts" class="tab">
-      <div id="artList">Artefact restoration coming soon...</div>
-    </div>
-
-    <!-- Session Tab -->
-    <div id="session" class="tab">
-      <button id="timerBtn" onclick="toggleTimer()">Start Session</button>
-      <div id="sessionStats">XP: 0 | Rate: -- xp/hr | Restores: 0</div>
-      <div id="sessionLog"></div>
-    </div>
-
-    <!-- OCR Tab -->
-    <div id="ocr" class="tab">
-      <h5>Chat OCR (auto +1 on excavate)</h5>
-      <button onclick="scanChat()">Scan Chat Now</button>
-      <p id="chatStatus">Ready</p>
-
-      <h5>Material Storage OCR (manual coords)</h5>
-      <p>Use Alt+2 in Alt1 → drag over grid → copy X/Y/W/H from preview</p>
-      <div>
-        X: <input type="number" id="regX" min="0" />
-        Y: <input type="number" id="regY" min="0" />
-      </div>
-      <div>
-        Width: <input type="number" id="regW" min="100" />
-        Height: <input type="number" id="regH" min="100" />
-      </div>
-      <button onclick="saveRegion()">Save Region</button>
-      <button onclick="readStorage()">Read Storage Now</button>
-      <p id="storageStatus">No region saved</p>
-    </div>
+  <div class="btn-group btn-group-justified w-100">
+    <button class="btn btn-primary tab-btn active" onclick="showTab('inventory')">Inventory</button>
+    <button class="btn btn-primary tab-btn" onclick="showTab('ocr')">OCR</button>
   </div>
 
-  <script>
-    // === Data ===
-    const materialOrder = [
-      'Third Age iron', 'Samite silk', 'White oak', 'Goldrune', 'Orthenglass',
-      'Vellum', 'Leather scraps', 'Soapstone', 'Animal furs', 'Fossilised bone',
-      'Stormguard steel', 'Wings of War', 'Armadylean yellow', 'Aetherium alloy', 'Quintessence',
-      'Malachite green', 'Mark of the Kyzaj', 'Vulcanised rubber', 'Warforged bronze', 'Yu\'biusk clay',
-      'Dragon metal', 'Orgone', 'Compass rose', 'Carbon black', 'Felt',
-      'Keramos', 'White marble', 'Cobalt blue', 'Everlight silvthril', 'Star of Saradomin',
-      'Cadmium red', 'Chaotic brimstone', 'Demonhide', 'Eye of Dagon', 'Hellfire metal',
-      'Zarosian insignia', 'Imperial steel', 'Ancient vis', 'Tyrian purple', 'Blood of Orcus'
-    ];
+  <div id="inventory" class="tab active">
+    <div id="invList"></div>
+  </div>
 
-    let inventory = {};
-    let goals = {};
-    let session = { active: false, startTime: 0, xp: 0 };
+  <div id="ocr" class="tab">
+    <h5>Material Storage OCR</h5>
+    <p>Use Alt+2 → drag over storage grid → paste coords</p>
+    X: <input type="number" id="regX" />
+    Y: <input type="number" id="regY" /><br>
+    W: <input type="number" id="regW" />
+    H: <input type="number" id="regH" /><br>
+    <button onclick="saveRegion()">Save Region</button>
+    <button onclick="readStorage()">Read Storage Now</button>
+    <p id="storageStatus">No region saved</p>
+  </div>
+</div>
 
-    materialOrder.forEach(mat => {
-      inventory[mat] = 0;
-      goals[mat] = 0;
-    });
+<script>
 
-    // === Load / Save ===
-    function loadData() {
-      const data = JSON.parse(localStorage.getItem('archTracker') || '{}');
-      Object.assign(inventory, data.inventory || {});
-      Object.assign(goals, data.goals || {});
-      Object.assign(session, data.session || {});
-      const reg = data.region;
-      if (reg) {
-        document.getElementById('regX').value = reg.x || '';
-        document.getElementById('regY').value = reg.y || '';
-        document.getElementById('regW').value = reg.w || '';
-        document.getElementById('regH').value = reg.h || '';
-        document.getElementById('storageStatus').textContent = `Region saved (${reg.x},${reg.y} ${reg.w}x${reg.h})`;
+const materialOrder = [
+  'Third Age iron','Samite silk','White oak','Goldrune','Orthenglass',
+  'Vellum','Leather scraps','Soapstone','Animal furs','Fossilised bone',
+  'Stormguard steel','Wings of War','Armadylean yellow','Aetherium alloy','Quintessence',
+  'Malachite green','Mark of the Kyzaj','Vulcanised rubber','Warforged bronze','Yu\'biusk clay',
+  'Dragon metal','Orgone','Compass rose','Carbon black','Felt',
+  'Keramos','White marble','Cobalt blue','Everlight silvthril','Star of Saradomin',
+  'Cadmium red','Chaotic brimstone','Demonhide','Eye of Dagon','Hellfire metal',
+  'Zarosian insignia','Imperial steel','Ancient vis','Tyrian purple','Blood of Orcus'
+];
+
+let inventory = {};
+materialOrder.forEach(m => inventory[m] = 0);
+
+function saveData() {
+  localStorage.setItem('archTracker', JSON.stringify(inventory));
+}
+
+function loadData() {
+  const data = JSON.parse(localStorage.getItem('archTracker') || '{}');
+  Object.assign(inventory, data);
+}
+
+function refreshInventory() {
+  const list = document.getElementById('invList');
+  list.innerHTML = '';
+  materialOrder.forEach(mat => {
+    const div = document.createElement('div');
+    div.className = 'mat-card';
+    div.innerHTML = `<strong>${mat}</strong>: ${inventory[mat]}`;
+    list.appendChild(div);
+  });
+}
+
+function showTab(id) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function saveRegion() {
+  localStorage.setItem('archRegion', JSON.stringify(getRegion()));
+  document.getElementById('storageStatus').textContent = "Region saved!";
+}
+
+function getRegion() {
+  return {
+    x: parseInt(regX.value) || 0,
+    y: parseInt(regY.value) || 0,
+    w: parseInt(regW.value) || 400,
+    h: parseInt(regH.value) || 600
+  };
+}
+
+function readStorage() {
+  if (!alt1) return alert("Alt1 not connected");
+
+  const reg = getRegion();
+  const status = document.getElementById('storageStatus');
+  status.textContent = "Capturing...";
+
+  alt1.capture(reg.x, reg.y, reg.w, reg.h, function(img) {
+
+    let updated = 0;
+
+    const COL_W = 74;
+    const ROW_H = 52;
+    const NUM_W = 45;
+    const NUM_H = 16;
+    const OFF_X = 25;
+    const OFF_Y = 8;
+
+    for (let i = 0; i < materialOrder.length; i++) {
+      const col = i % 5;
+      const row = Math.floor(i / 5);
+
+      const nx = col * COL_W + OFF_X;
+      const ny = row * ROW_H + OFF_Y;
+
+      if (nx + NUM_W > reg.w || ny + NUM_H > reg.h) continue;
+
+      const numStr = alt1.ocr.read(img, nx, ny, NUM_W, NUM_H, {
+        font: "small"
+      });
+
+      const count = parseInt((numStr || "").trim()) || 0;
+      const mat = materialOrder[i];
+
+      if (inventory[mat] !== count) {
+        inventory[mat] = count;
+        updated++;
       }
     }
 
-    function saveData() {
-      localStorage.setItem('archTracker', JSON.stringify({ inventory, goals, session, region: getRegion() }));
-    }
-
-    function getRegion() {
-      return {
-        x: parseInt(document.getElementById('regX').value) || 0,
-        y: parseInt(document.getElementById('regY').value) || 0,
-        w: parseInt(document.getElementById('regW').value) || 400,
-        h: parseInt(document.getElementById('regH').value) || 600
-      };
-    }
-
-    function saveRegion() {
-      saveData();
-      document.getElementById('storageStatus').textContent = 'Region saved!';
-    }
-
-    // === UI Helpers ===
-    function showTab(tabId) {
-      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-      document.getElementById(tabId).classList.add('active');
-      document.querySelector(`button[onclick="showTab('${tabId}')"]`).classList.add('active');
-      if (tabId === 'inventory') refreshInventory();
-      if (tabId === 'goals') refreshGoals();
-    }
-
-    function refreshInventory() {
-      const search = document.getElementById('searchInv').value.toLowerCase();
-      const list = document.getElementById('invList');
-      list.innerHTML = '';
-      materialOrder.forEach(mat => {
-        if (search && !mat.toLowerCase().includes(search)) return;
-        const count = inventory[mat] || 0;
-        const goal = goals[mat] || 0;
-        const pct = goal > 0 ? Math.min(100, Math.floor(count / goal * 100)) : 0;
-        const div = document.createElement('div');
-        div.className = 'mat-card';
-        div.innerHTML = `
-          <strong>${mat}</strong>: ${count} ${goal > 0 ? `/ ${goal}` : ''}
-          <div class="progress"><div class="progress-bar" style="width:${pct}%"></div></div>
-          <button onclick="addMat('${mat}',1)">+1</button>
-          <button onclick="addMat('${mat}',-1)">-1</button>
-        `;
-        list.appendChild(div);
-      });
-    }
-
-    function refreshGoals() {
-      const list = document.getElementById('goalList');
-      list.innerHTML = '';
-      materialOrder.forEach(mat => {
-        const goal = goals[mat] || 0;
-        if (goal === 0) return;
-        const count = inventory[mat] || 0;
-        const div = document.createElement('div');
-        div.className = 'mat-card';
-        div.innerHTML = `${mat}: ${count} / ${goal}`;
-        list.appendChild(div);
-      });
-    }
-
-    function addMat(mat, delta) {
-      inventory[mat] = Math.max(0, (inventory[mat] || 0) + delta);
-      saveData();
-      refreshInventory();
-    }
-
-    function bulkSetGoal(qty) {
-      materialOrder.forEach(mat => goals[mat] = qty);
-      saveData();
-      refreshGoals();
-    }
-
-    function toggleTimer() {
-      // Placeholder - expand with real timer logic
-      alert('Session timer started (placeholder)');
-    }
-
-    // === Alt1 Detection ===
-    function checkAlt1() {
-      const el = document.getElementById('status');
-      if (typeof alt1 !== 'undefined' && alt1) {
-        el.innerHTML = 'Alt1 ✔ Connected';
-        el.style.color = 'lime';
-      } else {
-        el.innerHTML = 'Alt1 not detected';
-        el.style.color = 'orange';
-      }
-    }
-
-    // === Chat OCR (+1 on excavate) ===
-    function scanChat() {
-      if (!alt1) return alert('Alt1 not connected');
-      const reader = new Chatbox.default();
-      reader.readargs = { colors: [A1lib.mixColor(255,255,255)] }; // white text
-      reader.read();
-      const lines = reader.result?.lines || [];
-      let added = 0;
-      lines.forEach(line => {
-        const match = line.text.match(/You find (?:some )?(\d+)? ?(.+?)(?:\.|$)/i);
-        if (match) {
-          const qty = parseInt(match[1]) || 1;
-          let mat = match[2].trim();
-          // Fuzzy match to our list (improve as needed)
-          const found = materialOrder.find(m => m.toLowerCase().includes(mat.toLowerCase()));
-          if (found) {
-            inventory[found] = (inventory[found] || 0) + qty;
-            added += qty;
-          }
-        }
-      });
-      if (added > 0) {
-        saveData();
-        refreshInventory();
-        document.getElementById('chatStatus').textContent = `Added ${added} materials!`;
-      } else {
-        document.getElementById('chatStatus').textContent = 'No new materials found in chat';
-      }
-    }
-
-    // === Storage OCR (using saved coords) ===
-    function readStorage() {
-      if (!alt1) return alert('Alt1 not connected');
-      const reg = getRegion();
-      if (reg.w < 100 || reg.h < 100) return alert('Set valid region first (use Alt+2 to get coords)');
-
-      const status = document.getElementById('storageStatus');
-      status.textContent = 'Capturing...';
-
-      alt1.captureHold(function(img) {
-        let updated = 0;
-        const COL_W = 74;   // Tune these based on your screenshot
-        const ROW_H = 52;
-        const NUM_W = 45;
-        const NUM_H = 16;
-        const OFF_X = 25;
-        const OFF_Y = 8;
-
-        for (let i = 0; i < materialOrder.length; i++) {
-          const col = i % 5;
-          const row = Math.floor(i / 5);
-          const nx = reg.x + col * COL_W + OFF_X;
-          const ny = reg.y + row * ROW_H + OFF_Y;
-
-          // Check if within captured area
-          if (nx + NUM_W > reg.x + reg.w || ny + NUM_H > reg.y + reg.h) continue;
-
-          const numStr = alt1.ocr.read(img, nx - reg.x, ny - reg.y, NUM_W, NUM_H); // relative to capture
-          const count = parseInt(numStr.trim()) || 0;
-          const mat = materialOrder[i];
-          if (inventory[mat] !== count) {
-            inventory[mat] = count;
-            updated++;
-          }
-        }
-
-        saveData();
-        refreshInventory();
-        status.textContent = updated > 0 ? `Updated ${updated} materials!` : 'No changes detected';
-      });
-    }
-
-    // Init
-    loadData();
-    checkAlt1();
+    saveData();
     refreshInventory();
-    setInterval(checkAlt1, 2000); // Re-check Alt1 connection
 
-    // Auto-scan chat every 10s when OCR tab open (optional)
-    setInterval(() => {
-      if (document.getElementById('ocr').classList.contains('active')) scanChat();
-    }, 10000);
-  </script>
+    status.textContent = updated > 0
+      ? `Updated ${updated} materials!`
+      : "No changes detected";
+  });
+}
+
+function checkAlt1() {
+  const el = document.getElementById("status");
+  if (typeof alt1 !== "undefined") {
+    el.textContent = "Alt1 ✔ Connected";
+    el.style.color = "lime";
+  } else {
+    el.textContent = "Alt1 not detected";
+    el.style.color = "orange";
+  }
+}
+
+loadData();
+refreshInventory();
+checkAlt1();
+setInterval(checkAlt1, 2000);
+
+</script>
 </body>
 </html>
