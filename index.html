@@ -640,25 +640,35 @@ async function scanMaterialStorage(){
     return;
   }
   const absX=storedWinX, absY=storedWinY;
-  out.textContent='Scanning from ('+absX+','+absY+')...';
+  out.textContent='Scanning...';
   try{
     const testX=absX+8;
-    const lines=['Pixel debug at x='+testX+', win y='+absY+':'];
-    for(let dy=25;dy<=75;dy+=5){
-      const cap=A1lib.capture(testX, absY+dy, 60, 6);
-      if(cap&&cap.data){
-        const d=cap.data;
-        let bright=0;
-        for(let i=0;i<d.length;i+=4) if(d[i]>150&&d[i+1]>150&&d[i+2]>100) bright++;
-        let ocrTxt='';
-        try{
-          if(OCR&&OCR.readSmallChars&&OCR.smallChars){
-            const r=OCR.readSmallChars(cap,OCR.smallChars,[[255,255,255],[255,199,0],[200,200,200]]);
-            if(r&&r.text) ocrTxt=' ocr="'+r.text+'"';
-          }
-        }catch(e2){}
-        lines.push('y+'+dy+': bright='+bright+ocrTxt);
+    const numY=absY+50; // peak brightness found at y+50
+    const cap=A1lib.capture(testX, numY, 200, 12);
+    const lines=['Cap at ('+testX+','+numY+') size '+(cap?cap.width+'x'+cap.height:'null')];
+    if(cap&&cap.data){
+      // Try every available OCR font
+      const colorSets=[
+        [[255,255,255],[255,199,0],[200,200,200],[220,210,180]],
+        [[255,255,255]],
+        [[200,180,100],[220,200,130],[240,220,160]],
+      ];
+      const fonts=['smallChars','chatFont','dialogFont','altFont'];
+      for(const font of fonts){
+        if(!OCR||!OCR[font]) continue;
+        for(const colors of colorSets){
+          try{
+            const r=OCR.readSmallChars(cap,OCR[font],colors);
+            if(r&&r.text&&r.text.trim()) lines.push(font+': "'+r.text+'"');
+          }catch(e2){}
+          try{
+            const r=OCR.readLine(cap,OCR[font],colors);
+            if(r&&r.text&&r.text.trim()) lines.push(font+' readLine: "'+r.text+'"');
+          }catch(e2){}
+        }
       }
+      // Also log available OCR properties
+      lines.push('OCR keys: '+Object.keys(OCR||{}).join(','));
     }
     out.textContent=lines.join('\n');
   }catch(e){out.textContent='Error: '+e.message;}
