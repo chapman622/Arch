@@ -246,7 +246,7 @@
 
 <div class="panel" id="panel-ocr">
   <div class="oa">
-    <p class="oh">1. Open Material Storage<br>2. Locate window (top-left + 500×342 px)<br>3. Tune if needed<br>4. Scroll to top → Scan Top<br>5. Scroll down until Dragonkin visible → Scan Bottom</p>
+    <p class="oh">1. Open Material Storage<br>2. Locate window (500×342 px)<br>3. Tune if needed<br>4. Scroll to top → Scan Top<br>5. Scroll down until Dragonkin visible → Scan Bottom</p>
     <div style="display:flex;gap:5px;align-items:center;flex-wrap:wrap;margin-bottom:2px">
       <button class="btn" id="btn-locate">🎯 Locate Window</button>
       <span id="locate-status" style="font-size:9px;color:var(--muted)">Window not set</span>
@@ -416,9 +416,12 @@ function readNumberAt(x, y) {
         if (r && r.text) {
           const cleaned = r.text.replace(/[^0-9]/g, '');
           const n = parseInt(cleaned);
-          if (!isNaN(n) && n >= 0) return n;
+          if (!isNaN(n) && n >= 0) {
+            console.log(`OCR success (smallChars): ${cleaned} → ${n}`);
+            return n;
+          }
         }
-      } catch(e) {}
+      } catch(e) { console.log("smallChars error:", e); }
     }
 
     if (OCR && OCR.readLine && OCR.smallChars) {
@@ -427,9 +430,12 @@ function readNumberAt(x, y) {
         if (r && r.text) {
           const cleaned = r.text.replace(/[^0-9]/g, '');
           const n = parseInt(cleaned);
-          if (!isNaN(n) && n >= 0) return n;
+          if (!isNaN(n) && n >= 0) {
+            console.log(`OCR success (readLine): ${cleaned} → ${n}`);
+            return n;
+          }
         }
-      } catch(e) {}
+      } catch(e) { console.log("readLine error:", e); }
     }
 
     let brightCount = 0;
@@ -441,11 +447,14 @@ function readNumberAt(x, y) {
     }
 
     if (brightCount > 25) {
+      console.log(`Fallback: ${brightCount} bright pixels at x=${x}, y=${y} - assuming non-zero`);
       return 1;
     }
 
+    console.log(`OCR failed at x=${x}, y=${y} - brightCount=${brightCount}`);
     return null;
   } catch(e) {
+    console.error("OCR global error:", e);
     return null;
   }
 }
@@ -654,40 +663,7 @@ function initTuners() {
 }
 
 // ────────────────────────────────────────────────
-// Event listeners & init
-// ────────────────────────────────────────────────
-document.querySelectorAll('.tab').forEach(tab=>{
-  tab.addEventListener('click',()=>{
-    document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
-    document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
-    tab.classList.add('active');
-    document.getElementById('panel-'+tab.dataset.tab).classList.add('active');
-    if(tab.dataset.tab==='art')renderArts();
-    if(tab.dataset.tab==='sess'){renderSessionLogBtns();renderSessionMats();}
-  });
-});
-
-document.getElementById('btn-scan-top').addEventListener('click', () => {
-  initTuners();
-  scanTop();
-});
-document.getElementById('btn-scan-bottom').addEventListener('click', scanBottom);
-document.getElementById('btn-locate').addEventListener('click', startLocate);
-document.getElementById('btn-ocr-apply').addEventListener('click',()=>{
-  Object.entries(ocrParsed).forEach(([m,v])=>{if(S.counts[m]!=null)S.counts[m]=v;});
-  save();renderMats();renderArts();renderSessionMats();
-  document.getElementById('ocr-results').style.display='none';
-  document.getElementById('ocr-out').textContent='Applied.';
-  ocrParsed={};
-});
-document.getElementById('btn-ocr-discard').addEventListener('click',()=>{
-  document.getElementById('ocr-results').style.display='none';
-  document.getElementById('ocr-out').textContent='Discarded.';
-  ocrParsed={};
-});
-
-// ────────────────────────────────────────────────
-// Tracker core (load, save, render, etc.)
+// Tracker core logic
 // ────────────────────────────────────────────────
 function load(){
   try{const s=localStorage.getItem(KEY);if(s)S=JSON.parse(s);}catch(e){}
@@ -899,6 +875,44 @@ function updateStatus(){
   document.getElementById('s-canrest').textContent=ARTEFACTS.filter(canRestore).length;
 }
 
+// ────────────────────────────────────────────────
+// Event listeners & init
+// ────────────────────────────────────────────────
+document.querySelectorAll('.tab').forEach(tab=>{
+  tab.addEventListener('click',()=>{
+    document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById('panel-'+tab.dataset.tab).classList.add('active');
+    if(tab.dataset.tab==='art')renderArts();
+    if(tab.dataset.tab==='sess'){renderSessionLogBtns();renderSessionMats();}
+  });
+});
+
+document.getElementById('btn-scan-top').addEventListener('click', () => {
+  initTuners();
+  scanTop();
+});
+document.getElementById('btn-scan-bottom').addEventListener('click', scanBottom);
+document.getElementById('btn-locate').addEventListener('click', startLocate);
+document.getElementById('btn-ocr-apply').addEventListener('click', () => {
+  Object.entries(ocrParsed).forEach(([m,v]) => {
+    if (S.counts[m] !== undefined) S.counts[m] = v;
+  });
+  save();
+  renderMats();
+  renderArts();
+  renderSessionMats();
+  document.getElementById('ocr-results').style.display = 'none';
+  document.getElementById('ocr-out').textContent = 'Applied detected values to inventory.';
+  ocrParsed = {};
+});
+document.getElementById('btn-ocr-discard').addEventListener('click', () => {
+  document.getElementById('ocr-results').style.display = 'none';
+  document.getElementById('ocr-out').textContent = 'Discarded.';
+  ocrParsed = {};
+});
+
 // Initial load
 load();
 renderMats();
@@ -906,9 +920,9 @@ renderLegend();
 renderArts();
 updateStatus();
 
-// Alt1 badge
-if(window.alt1){
-  document.getElementById('alt1-badge').textContent='Alt1 ✔';
+// Alt1 detection
+if (window.alt1) {
+  document.getElementById('alt1-badge').textContent = 'Alt1 ✔';
   document.getElementById('alt1-badge').classList.add('ok');
 }
 </script>
