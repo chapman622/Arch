@@ -669,17 +669,27 @@ async function scanMaterialStorage(){
       return segs;
     }
 
-    // Dump segment details for first 5 materials
     const numY=absY+50;
+    const yellow=A1lib.mixColor(255,199,0);
+    const green=A1lib.mixColor(100,255,100);
+    const red=A1lib.mixColor(255,80,80);
+
+    // Draw a rectangle around the whole agnostic row area
+    alt1.overLayRect(yellow, absX+6, numY-1, 385, 14, 3000, 2);
+
+    // Draw individual rectangles for each of the first 5 icon number regions
     const lines=[];
     for(let i=0;i<5;i++){
       const numX=absX+8+(i*ICON_W);
+      // Draw green box around each number read region
+      alt1.overLayRect(green, numX-2, numY-1, ICON_W, 14, 3000, 1);
       const cap=A1lib.capture(numX-2, numY, ICON_W, 12);
       const segs=getSegments(cap);
       const segStr=segs.map(s=>'[w='+s.w+' t='+s.total+']').join(' ');
       lines.push(STORAGE_ORDER[i].substring(0,12)+': '+segStr);
     }
-    // Expected: 1879, 634, 3877, 2775, 108
+
+    alt1.overLayRefreshGroup(0);
     out.textContent='Segment analysis (expected: 1879,634,3877,2775,108):\n\n'+lines.join('\n');
   }catch(e){out.textContent='Error: '+e.message;}
 }
