@@ -642,20 +642,117 @@ async function scanMaterialStorage(){
   const absX=storedWinX, absY=storedWinY;
   out.textContent='Scanning...';
   try{
-    const testX=absX+8, testY=absY+50;
-    const cap=A1lib.capture(testX, testY, 280, 12);
-    if(!cap||!cap.data){out.textContent='Capture failed';return;}
-    const d=cap.data, w=cap.width, h=cap.height;
-    let profile='';
-    for(let x=0;x<w;x+=2){
-      let colSum=0;
-      for(let y=0;y<h;y++){
-        const i=(y*w+x)*4;
-        if(d[i]>140&&d[i+1]>130&&d[i+2]>90) colSum++;
+    // Read a single number from a pixel region by grouping bright column runs
+    function readNumFromPixels(cap){
+      if(!cap||!cap.data) return null;
+      const d=cap.data, w=cap.width, h=cap.height;
+
+      // Build per-column brightness (0=dark, 1=bright)
+      const cols=[];
+      for(let x=0;x<w;x++){
+        let bright=0;
+        for(let y=0;y<h;y++){
+          const i=(y*w+x)*4;
+          if(d[i]>130&&d[i+1]>120&&d[i+2]>80) bright++;
+        }
+        cols.push(bright);
       }
-      profile+=(colSum>0?'#':'.');
+
+      // Segment into digit groups (runs of non-zero columns, separated by gaps)
+      const digits=[];
+      let start=-1;
+      for(let x=0;x<=cols.length;x++){
+        const on=x<cols.length&&cols[x]>0;
+        if(on&&start===-1) start=x;
+        if(!on&&start!==-1){
+          digits.push({start, end:x-1, width:x-start, cols:cols.slice(start,x)});
+          start=-1;
+        }
+      }
+
+      if(!digits.length) return null;
+
+      // Classify each digit segment
+      // RS3 interface font digit widths and pixel densities:
+      // 1: very narrow ~2-3px
+      // 0: wide ~5-6px, hollow (fewer bright pixels per col)
+      // 8: wide ~5-6px, dense
+      // 4: medium ~5px
+      // 2,3,5,6,7,9: medium ~4-5px
+      // We use width + total bright pixels + top/bottom half ratio
+      let numStr='';
+      for(const seg of digits){
+        const w2=seg.width;
+        const total=seg.cols.reduce((a,b)=>a+b,0);
+        const density=total/(w2*h);
+
+        // Top half vs bottom half brightness
+        let topBright=0, botBright=0;
+        for(let x=seg.start;x<=seg.end;x++){
+          for(let y=0;y<h;y++){
+            const i=(y*w+x)*4;
+            const bright=d[i]>130&&d[i+1]>120&&d[i+2]>80?1:0;
+            if(y<h/2) topBright+=bright; else botBright+=bright;
+          }
+        }
+
+        // Left half vs right half
+        const mid=seg.start+Math.floor(w2/2);
+        let leftBright=0, rightBright=0;
+        for(let x=seg.start;x<=seg.end;x++){
+          for(let y=0;y<h;y++){
+            const i=(y*w+x)*4;
+            const bright=d[i]>130&&d[i+1]>120&&d[i+2]>80?1:0;
+            if(x<mid) leftBright+=bright; else rightBright+=bright;
+          }
+        }
+
+        const topRatio=topBright/(topBright+botBright+0.01);
+        const leftRatio=leftBright/(leftBright+rightBright+0.01);
+
+        let digit='?';
+        if(w2<=2) digit='1';
+        else if(w2>=3&&w2<=7){
+          if(density<0.25) digit='0'; // hollow
+          else if(topRatio>0.65) digit='7';
+          else if(topRatio<0.35) digit='2'; // more bottom heavy... actually tricky
+          else if(density>0.55) digit='8';
+          else if(leftRatio>0.6) digit='4';
+          else digit=total<=8?'1':total<=12?'7':total<=18?'3':total<=22?'2':total<=26?'5':total<=30?'6':total<=34?'9':'0';
+        }
+        numStr+=digit;
+      }
+      return numStr;
     }
-    out.textContent='Cap:'+w+'x'+h+' at ('+testX+','+testY+')\nProfile (2px cols):\n'+profile;
+
+    // Test on agnostic row - read all 10 numbers
+    const numY=absY+50;
+    const results=[];
+    // Read a strip wide enough for all 10 numbers in agnostic row
+    const fullCap=A1lib.capture(absX+6, numY, 385, 12);
+    let debugProfile='';
+    if(fullCap&&fullCap.data){
+      const d=fullCap.data, w=fullCap.width, h=fullCap.height;
+      for(let x=0;x<w;x+=1){
+        let bright=0;
+        for(let y=0;y<h;y++){
+          const i=(y*w+x)*4;
+          if(d[i]>130&&d[i+1]>120&&d[i+2]>80) bright++;
+        }
+        debugProfile+=(bright>0?'#':'.');
+      }
+    }
+
+    // Now read each material's number individually using ICON_W spacing
+    const lineResults=[];
+    for(let i=0;i<10;i++){
+      const numX=absX+8+(i*ICON_W);
+      const cap=A1lib.capture(numX-2, numY, ICON_W-2, 12);
+      const val=readNumFromPixels(cap);
+      lineResults.push(STORAGE_ORDER[i].substring(0,10)+': '+val);
+    }
+
+    out.textContent='Profile:\n'+debugProfile+'\n\nPer-icon reads:\n'+lineResults.join('\n');
   }catch(e){out.textContent='Error: '+e.message;}
 }
 
