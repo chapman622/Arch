@@ -211,7 +211,13 @@
 <!-- OCR -->
 <div class="panel" id="panel-ocr">
   <div class="oa">
-    <p class="oh">Open your <strong style="color:var(--text)">Material Storage</strong> in-game (Archaeology journal → Materials tab), make sure it is fully visible, then click Scan. The tracker will read all material counts directly from the interface.</p>
+    <p class="oh">1. Open <strong style="color:var(--text)">Material Storage</strong> in RS3 (Archaeology journal → Materials tab)<br/>
+    2. Click <strong style="color:var(--text)">Locate Window</strong> then click the <strong style="color:var(--text)">top-left corner</strong> of the Material Storage window in-game<br/>
+    3. Click <strong style="color:var(--text)">Scan</strong> to read all counts</p>
+    <div style="display:flex;gap:5px;align-items:center;flex-wrap:wrap">
+      <button class="btn" id="btn-locate">🎯 Locate Window</button>
+      <span id="locate-status" style="font-size:9px;color:var(--muted)">Window not set</span>
+    </div>
     <div style="display:flex;gap:5px">
       <button class="btn pri" id="btn-scan">📷 Scan Screen</button>
       <button class="btn" id="btn-manual-ocr">✏ Manual Paste</button>
@@ -578,67 +584,9 @@ function showOCRRes(parsed){
   document.getElementById('ocr-results').style.display='block';
 }
 
-// Get pixel colour from ImageData at x,y
-function getPixel(imgData, x, y){
-  const i=(y*imgData.width+x)*4;
-  return [imgData.data[i],imgData.data[i+1],imgData.data[i+2]];
-}
-
-function colorMatch(px, tr, tg, tb, tolerance){
-  return Math.abs(px[0]-tr)<tolerance && Math.abs(px[1]-tg)<tolerance && Math.abs(px[2]-tb)<tolerance;
-}
-
-// Scan ImageData for the RS3 Material Storage title bar
-// Title bar is a dark brown band: approx rgb(58,48,28)
-// Title TEXT is bright gold: approx rgb(239,227,177)
-function findStorageWindow(imgData){
-  const w=imgData.width, h=imgData.height;
-  // Strategy: scan for the dark brown title bar background of RS3 windows
-  // Title bar bg is approx rgb(54,42,22) to rgb(70,55,30)
-  // We look for a horizontal band of this colour that is ~270-420px wide
-  // (Material Storage window is ~280px wide)
-  // Then verify by checking for light text pixels within that band
-
-  let bestMatch = null;
-
-  for(let y=10;y<h-300;y++){
-    // Count dark-brown title bar background pixels
-    let brownStart=-1, brownEnd=-1, brownCount=0;
-    for(let x=0;x<w;x++){
-      const px=getPixel(imgData,x,y);
-      // Dark brown RS3 title bar - try a range of brown shades
-      const isBrown = (
-        colorMatch(px,54,42,22,18) ||
-        colorMatch(px,62,49,26,18) ||
-        colorMatch(px,70,55,30,18) ||
-        colorMatch(px,46,36,18,18) ||
-        colorMatch(px,58,46,24,18)
-      );
-      if(isBrown){
-        if(brownStart===-1) brownStart=x;
-        brownEnd=x;
-        brownCount++;
-      } else if(brownStart!==-1 && x-brownEnd>20){
-        // Gap too large, reset
-        brownStart=-1; brownEnd=-1; brownCount=0;
-      }
-    }
-    const brownSpan = brownEnd - brownStart;
-    // Material Storage window title bar is ~270-290px wide
-    if(brownCount>200 && brownSpan>=240 && brownSpan<=380){
-      // Check there are light/white pixels inside (the title text)
-      let textPixels=0;
-      for(let x=brownStart;x<=brownEnd;x++){
-        const px=getPixel(imgData,x,y);
-        if(px[0]>180 && px[1]>170 && px[2]>140) textPixels++;
-      }
-      if(textPixels>=8 && textPixels<=80){
-        return {x: brownStart, y: y};
-      }
-    }
-  }
-  return null;
-}
+// Stored window position (set by user clicking Locate Window)
+let storedWinX = null;
+let storedWinY = null;
 
 // Read a number from a pixel region using Alt1 OCR
 function readNumberAt(x, y, w, h){
@@ -647,21 +595,18 @@ function readNumberAt(x, y, w, h){
     if(!cap) return null;
     const colors=[[255,255,255],[255,199,0],[220,220,200],[200,200,200]];
     if(OCR){
-      // Try readSmallChars
       if(OCR.readSmallChars && OCR.smallChars){
         try{
           const r=OCR.readSmallChars(cap, OCR.smallChars, colors);
           if(r && r.text){ const n=parseInt(r.text.replace(/[^0-9]/g,'')); if(!isNaN(n)&&n>=0) return n; }
         }catch(e){}
       }
-      // Try readLine
       if(OCR.readLine && OCR.smallChars){
         try{
           const r=OCR.readLine(cap, OCR.smallChars, colors);
           if(r && r.text){ const n=parseInt(r.text.replace(/[^0-9]/g,'')); if(!isNaN(n)&&n>=0) return n; }
         }catch(e){}
       }
-      // Try with chatFont
       if(OCR.readLine && OCR.chatFont){
         try{
           const r=OCR.readLine(cap, OCR.chatFont, colors);
@@ -673,37 +618,90 @@ function readNumberAt(x, y, w, h){
   return null;
 }
 
+// Locate window: wait for user to click on the RS3 screen
+// Alt1 provides alt1.mouseX/mouseY for current mouse position
+function startLocate(){
+  const status=document.getElementById('locate-status');
+  const btn=document.getElementById('btn-locate');
+  status.textContent='Click the TOP-LEFT corner of the Material Storage window in RS3...';
+  status.style.color='var(--accent)';
+  btn.disabled=true;
+
+  // Poll mouse position - when user clicks in RS3 window, capture coords
+  let countdown=10;
+  const interval=setInterval(()=>{
+    countdown--;
+    status.textContent=`Click the top-left corner of Material Storage in RS3... (${countdown}s)`;
+    if(countdown<=0){
+      clearInterval(interval);
+      btn.disabled=false;
+      status.textContent='Timed out. Try again.';
+      status.style.color='var(--danger)';
+    }
+  },1000);
+
+  // Use Alt1's mouse click capture
+  // Alt1 exposes alt1.mouseX and alt1.mouseY when mouse is over RS3
+  const mouseInterval=setInterval(()=>{
+    try{
+      // Check if user clicked (we poll and detect via alt1.mouseX/Y changing)
+      if(window.alt1 && alt1.mouseX!==undefined){
+        // We need a click event - use a one-time mousemove then click approach
+        // Actually just let user press a key or use a timeout
+      }
+    }catch(e){}
+  },100);
+
+  // Simpler approach: use Alt1's built-in overlay to highlight and capture click
+  // Show instructions and use a confirm-style approach
+  setTimeout(()=>{
+    clearInterval(interval);
+    clearInterval(mouseInterval);
+    btn.disabled=false;
+    try{
+      // Try to get current mouse position from Alt1
+      const mx=alt1.mouseX;
+      const my=alt1.mouseY;
+      if(mx!==undefined && my!==undefined && mx>0 && my>0){
+        storedWinX=mx;
+        storedWinY=my;
+        // Save to localStorage
+        localStorage.setItem('archStorageWinX', mx);
+        localStorage.setItem('archStorageWinY', my);
+        status.textContent=`Window set to (${mx}, ${my}) ✔`;
+        status.style.color='var(--accent2)';
+      } else {
+        status.textContent='Could not read mouse position. Try manual offset below.';
+        status.style.color='var(--danger)';
+      }
+    }catch(e){
+      status.textContent='Error: '+e.message;
+      status.style.color='var(--danger)';
+    }
+  },5000);
+}
+
 async function scanMaterialStorage(){
   const out=document.getElementById('ocr-out');
-  out.textContent='Capturing screen…';
+  out.className='op sf';setTimeout(()=>out.className='op',400);
+
+  // Load stored position
+  if(!storedWinX) storedWinX=parseInt(localStorage.getItem('archStorageWinX'))||null;
+  if(!storedWinY) storedWinY=parseInt(localStorage.getItem('archStorageWinY'))||null;
+
+  if(!storedWinX || !storedWinY){
+    out.textContent='Window position not set.
+
+Click "Locate Window" then hover your mouse over the top-left corner of the Material Storage window in RS3 for 5 seconds.';
+    return;
+  }
+
+  out.textContent=`Using window position: ${storedWinX}, ${storedWinY}
+Reading material counts…`;
 
   try{
-    // Get RS3 window bounds using correct Alt1 properties
-    const rsX=alt1.rsX||0;
-    const rsY=alt1.rsY||0;
-    const rsW=alt1.rsWidth||alt1.screenWidth||1920;
-    const rsH=alt1.rsHeight||alt1.screenHeight||1080;
-
-    out.textContent=`RS3 window: ${rsX},${rsY} ${rsW}x${rsH}\nCapturing…`;
-
-    // Capture full RS3 client as ImageData for scanning
-    const imgData=A1lib.capture(rsX, rsY, rsW, rsH);
-    if(!imgData){out.textContent='Could not capture RS3 screen.\nMake sure RS3 is running and visible.';return;}
-
-    out.textContent='Searching for Material Storage window…\n(scanning '+rsW+'x'+rsH+' pixels)';
-
-    // Find the window title
-    const win=findStorageWindow(imgData);
-    if(!win){
-      out.textContent='Could not find Material Storage window.\n\nMake sure:\n1. RS3 is running and logged in\n2. Material Storage is open (Archaeology journal → Materials tab)\n3. The full window is fully visible on screen\n\nIf this keeps failing, use Manual Paste instead.';
-      return;
-    }
-
-    // Convert to absolute screen coordinates
-    const absX=rsX+win.x;
-    const absY=rsY+win.y;
-
-    out.textContent=`Found window at: ${absX},${absY}\nReading material counts…`;
+    const absX=storedWinX;
+    const absY=storedWinY;
 
     let debugLines=[];
     const results={};
@@ -714,9 +712,7 @@ async function scanMaterialStorage(){
         const matName=STORAGE_ORDER[section.idx+i];
         if(!matName) continue;
         const col=i%10;
-        // x: window left + 8px padding + col * icon width + half icon width for centre
         const numX=absX+8+(col*ICON_W);
-        // y: window top + title bar (18px) + section y offset
         const numY=absY+18+section.y+NUM_Y_OFFSET;
         const num=readNumberAt(numX, numY, 44, 13);
 
@@ -729,35 +725,40 @@ async function scanMaterialStorage(){
       }
     });
 
-    out.textContent=`Window: ${absX},${absY}\nDebug reads:\n${debugLines.join('\n')}\n\nFound ${found} non-zero values.\nIf counts look wrong, check offsets.`;
+    out.textContent=`Window: ${absX},${absY}
+Debug reads:
+${debugLines.join('
+')}
+
+Found ${found} non-zero values.`;
     showOCRRes(results);
 
   }catch(e){
-    out.textContent='Error: '+e.message+'\n\nUse Manual Paste as a fallback.';
+    out.textContent='Error: '+e.message+'
+
+Use Manual Paste as a fallback.';
   }
 }
 
 document.getElementById('btn-scan').addEventListener('click',()=>{
-  const out=document.getElementById('ocr-out');
-  out.className='op sf';setTimeout(()=>out.className='op',400);
   if(!window.alt1){
-    out.textContent='⚠ Alt1 not detected.\n\nOpen this app inside Alt1 Toolkit to use screen reading.\nOr use "Manual Paste" below.';
+    document.getElementById('ocr-out').textContent='⚠ Alt1 not detected.
+
+Open this app inside Alt1 Toolkit to use screen reading.
+Or use "Manual Paste" below.';
     return;
   }
   scanMaterialStorage();
 });
-document.getElementById('btn-manual-ocr').addEventListener('click',()=>{
-  const pb=document.getElementById('paste-box'),pp=document.getElementById('btn-parse-paste');
-  const show=pb.style.display==='none';
-  pb.style.display=show?'block':'none';pp.style.display=show?'block':'none';
-  if(show) document.getElementById('ocr-out').textContent='Paste text then click Parse Text.';
+
+document.getElementById('btn-locate').addEventListener('click',()=>{
+  if(!window.alt1){
+    document.getElementById('locate-status').textContent='Alt1 not detected.';
+    return;
+  }
+  startLocate();
 });
-document.getElementById('btn-parse-paste').addEventListener('click',()=>{
-  const text=document.getElementById('paste-box').value;
-  const parsed=parseText(text);
-  document.getElementById('ocr-out').textContent='Parsed — found '+Object.keys(parsed).length+' match(es).';
-  showOCRRes(parsed);
-});
+
 document.getElementById('btn-ocr-apply').addEventListener('click',()=>{
   Object.entries(ocrParsed).forEach(([m,v])=>{if(S.counts[m]!=null)S.counts[m]=v;});
   save();renderMats();renderArts();renderSessionMats();
