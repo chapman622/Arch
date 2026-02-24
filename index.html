@@ -246,7 +246,7 @@
 
 <div class="panel" id="panel-ocr">
   <div class="oa">
-    <p class="oh">1. Open Material Storage<br>2. Click Locate Window (500×342 px)<br>3. Tune offsets if needed<br>4. Scroll to top → Scan Top<br>5. Scroll down until Dragonkin visible → Scan Bottom</p>
+    <p class="oh">1. Open Material Storage<br>2. Locate window (500×342 px)<br>3. Tune offsets if needed<br>4. Scroll to top → Scan Top<br>5. Scroll down until Dragonkin visible → Scan Bottom</p>
     <div style="display:flex;gap:5px;align-items:center;flex-wrap:wrap;margin-bottom:2px">
       <button class="btn" id="btn-locate">🎯 Locate Window</button>
       <span id="locate-status" style="font-size:9px;color:var(--muted)">Window not set</span>
@@ -381,13 +381,13 @@ let numH = 44;
 let horizStep = 49;
 
 // ────────────────────────────────────────────────
-// OCR read function
+// OCR read function - updated with more colors, bigger capture, lower fallback threshold
 // ────────────────────────────────────────────────
 function readNumberAt(x, y, w, h) {
   try {
-    const captureW = 60;
-    const captureH = 50;
-    const cap = A1lib.capture(x - 6, y - 7, captureW, captureH);
+    const captureW = 80;   // increased
+    const captureH = 60;   // increased
+    const cap = A1lib.capture(x - 10, y - 12, captureW, captureH);  // shift origin up/left
     if (!cap) return null;
 
     const colors = [
@@ -403,7 +403,12 @@ function readNumberAt(x, y, w, h) {
       [255,230,140], [245,205,80],  [255,210,110], [230,190,70],
       [240,220,130], [255,245,180], [235,195,90],  [255,235,140],
       [245,210,110], [230,180,80],  [255,220,90],  [240,195,100],
-      [255,230,130], [245,200,90],  [230,170,70]
+      [255,230,130], [245,200,90],  [230,170,70],
+      // Added more gold/yellow shades for RS3 numbers
+      [255,245,200], [255,235,180], [255,225,160], [255,215,140],
+      [240,220,160], [240,210,140], [230,200,120], [220,190,100],
+      [255,250,220], [255,240,200], [245,230,180], [235,220,160],
+      [255,255,180], [255,245,160], [245,235,140], [235,225,120]
     ];
 
     let r;
@@ -443,7 +448,7 @@ function readNumberAt(x, y, w, h) {
       }
     }
 
-    if (brightCount > 50) {
+    if (brightCount > 25) {  // lowered threshold
       console.log(`Fallback: ${brightCount} bright pixels detected at x=${x}, y=${y} - assuming non-zero`);
       return 1;
     }
@@ -457,7 +462,7 @@ function readNumberAt(x, y, w, h) {
 }
 
 // ────────────────────────────────────────────────
-// Scanning logic - Top = 0-14 (3 rows), Bottom = 15-39
+// Scanning logic
 // ────────────────────────────────────────────────
 async function performScan(startIdx, endIdx, label) {
   const out = document.getElementById('ocr-out');
@@ -467,7 +472,7 @@ async function performScan(startIdx, endIdx, label) {
   }
   const absX = storedWinX, absY = storedWinY;
 
-  // Big yellow box - reduced height to avoid going under title bar
+  // Reduced yellow box height to avoid under interface
   const boxHeight = storedWinHeight - 35;
   if (storedWinWidth && storedWinHeight) {
     alt1.overLayRect(A1lib.mixColor(255, 200, 0), absX, absY, storedWinWidth, boxHeight, 5000, 3);
@@ -609,13 +614,14 @@ function startLocate(){
       status.textContent = 'Set coordinates first';
       return;
     }
-    alt1.overLayRect(A1lib.mixColor(255,200,0), storedWinX, storedWinY, storedWinWidth, storedWinHeight - 35, 8000, 3);
+    const boxHeight = storedWinHeight - 35;
+    alt1.overLayRect(A1lib.mixColor(255,200,0), storedWinX, storedWinY, storedWinWidth, boxHeight, 8000, 3);
     status.textContent = 'Yellow box drawn – check alignment';
   });
 }
 
 // ────────────────────────────────────────────────
-// Tuners panel
+// Tuners
 // ────────────────────────────────────────────────
 function initTuners() {
   if (document.getElementById('tuners')) return;
@@ -662,29 +668,7 @@ function initTuners() {
 }
 
 // ────────────────────────────────────────────────
-// Event listeners
-// ────────────────────────────────────────────────
-document.getElementById('btn-scan-top').addEventListener('click', () => {
-  initTuners();
-  scanTop();
-});
-document.getElementById('btn-scan-bottom').addEventListener('click', scanBottom);
-document.getElementById('btn-locate').addEventListener('click', startLocate);
-document.getElementById('btn-ocr-apply').addEventListener('click',()=>{
-  Object.entries(ocrParsed).forEach(([m,v])=>{if(S.counts[m]!=null)S.counts[m]=v;});
-  save();renderMats();renderArts();renderSessionMats();
-  document.getElementById('ocr-results').style.display='none';
-  document.getElementById('ocr-out').textContent='Applied values.';
-  ocrParsed={};
-});
-document.getElementById('btn-ocr-discard').addEventListener('click',()=>{
-  document.getElementById('ocr-results').style.display='none';
-  document.getElementById('ocr-out').textContent='Discarded.';
-  ocrParsed={};
-});
-
-// ────────────────────────────────────────────────
-// Original logic (load/save/render/etc.)
+// Original tracker logic
 // ────────────────────────────────────────────────
 function load(){
   try{const s=localStorage.getItem(KEY);if(s)S=JSON.parse(s);}catch(e){}
