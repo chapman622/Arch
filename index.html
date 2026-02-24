@@ -329,13 +329,12 @@ let ocrParsed={};
 // OCR Settings – updated with your measurements
 let storedWinX = parseInt(localStorage.getItem('archStorageWinX')) || null;
 let storedWinY = parseInt(localStorage.getItem('archStorageWinY')) || null;
-let offsetX = 6;       // start of first number in row
-let offsetY = 62;      // top of first row numbers
-let iconW   = 40;      // width of each capture box
-let numH    = 36;      // height of each capture box
-let horizStep = 49;    // distance between box starts (40 + 9 gap)
+let offsetX = 6;
+let offsetY = 62;
+let iconW = 40;
+let numH = 36;
+let horizStep = 49;  // 40 px box + 9 px gap
 
-// Storage order (same as before)
 const STORAGE_ORDER = [
   'Third Age iron','Samite silk','White oak','Goldrune','Orthenglass',
   'Vellum','Leather scraps','Soapstone','Animal furs','Fossilised bone',
@@ -355,7 +354,8 @@ function readNumberAt(x, y, w, h) {
       [255,255,255], [255,220,100], [255,200,80], [240,210,90],
       [255,215,0],   [230,190,60], [255,199,0], [255,180,80],
       [220,160,40],  [255,240,140], [245,225,90], [255,230,150],
-      [240,200,100], [255,210,120], [230,170,50], [255,245,180]
+      [240,200,100], [255,210,120], [230,170,50], [255,245,180],
+      [255,235,120], [245,215,70],  [220,180,90], [255,225,130]
     ];
     let r;
     if (OCR && OCR.readSmallChars && OCR.smallChars) {
@@ -442,7 +442,6 @@ async function scanMaterialStorage() {
 
   for (let row of ROWS) {
     const numY = absY + row.dy;
-    // Yellow row highlight – updated width
     const totalRowWidth = (5 * horizStep) - (horizStep - iconW) + 20;
     alt1.overLayRect(A1lib.mixColor(255,255,0), absX + 2, numY - 4, totalRowWidth, numH + 8, 2500, 1);
 
@@ -484,7 +483,7 @@ function showOCRRes(parsed){
 }
 
 // ────────────────────────────────────────────────────────────────
-// The rest of your original code follows here unchanged
+// Rest of your original script (load, save, renderMats, etc.) remains unchanged below
 // ────────────────────────────────────────────────────────────────
 function load(){
   try{const s=localStorage.getItem(KEY);if(s)S=JSON.parse(s);}catch(e){}
@@ -548,7 +547,7 @@ document.getElementById('btn-reset-all').addEventListener('click',()=>{
   MATS.forEach(m=>S.counts[m.name]=0);save();renderMats();renderArts();renderSessionMats();
 });
 
-// ARTEFACTS rendering and logic (unchanged)
+// ARTEFACTS
 function canRestore(art){return Object.entries(art.mats).every(([m,n])=>(S.counts[m]||0)>=n);}
 function matCulture(name){return MATS.find(x=>x.name===name)?.c||'Agnostic';}
 
@@ -607,7 +606,7 @@ document.getElementById('art-search').addEventListener('input',renderArts);
 document.getElementById('art-site').addEventListener('change',renderArts);
 document.getElementById('art-filter').addEventListener('change',renderArts);
 
-// SESSION logic (unchanged)
+// SESSION
 let sessInterval=null,sessStart=null,sessSnap={},sessRestores=[];
 function fmtElapsed(ms){
   const h=Math.floor(ms/3600000),m=Math.floor((ms%3600000)/60000),s=Math.floor((ms%60000)/1000);
@@ -697,9 +696,9 @@ function startLocate(){
   div.style.cssText='display:flex;gap:4px;align-items:center;margin-top:4px;flex-wrap:wrap';
   div.innerHTML=
     '<span style="font-size:9px;color:var(--muted)">X:</span>'+
-    '<input type="number" id="coord-x" style="width:55px;background:var(--bg);border:1px solid var(--border);color:var(--text);font-family:inherit;font-size:10px;padding:2px 4px;border-radius:2px" placeholder="e.g. 296"/>'+
+    '<input type="number" id="coord-x" style="width:55px;background:var(--bg);border:1px solid var(--border);color:var(--text);font-family:inherit;font-size:10px;padding:2px 4px;border-radius:2px" placeholder="e.g. 555"/>'+
     '<span style="font-size:9px;color:var(--muted)">Y:</span>'+
-    '<input type="number" id="coord-y" style="width:55px;background:var(--bg);border:1px solid var(--border);color:var(--text);font-family:inherit;font-size:10px;padding:2px 4px;border-radius:2px" placeholder="e.g. 200"/>'+
+    '<input type="number" id="coord-y" style="width:55px;background:var(--bg);border:1px solid var(--border);color:var(--text);font-family:inherit;font-size:10px;padding:2px 4px;border-radius:2px" placeholder="e.g. 283"/>'+
     '<button class="btn suc" id="btn-coord-set" style="font-size:9px;padding:2px 6px">Set</button>'+
     '<span style="font-size:9px;color:var(--muted)">(top-left corner of title bar)</span>';
   btn.parentNode.insertBefore(div, btn.nextSibling);
