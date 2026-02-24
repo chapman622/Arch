@@ -642,35 +642,20 @@ async function scanMaterialStorage(){
   const absX=storedWinX, absY=storedWinY;
   out.textContent='Scanning...';
   try{
-    const testX=absX+8;
-    const numY=absY+50; // peak brightness found at y+50
-    const cap=A1lib.capture(testX, numY, 200, 12);
-    const lines=['Cap at ('+testX+','+numY+') size '+(cap?cap.width+'x'+cap.height:'null')];
-    if(cap&&cap.data){
-      // Try every available OCR font
-      const colorSets=[
-        [[255,255,255],[255,199,0],[200,200,200],[220,210,180]],
-        [[255,255,255]],
-        [[200,180,100],[220,200,130],[240,220,160]],
-      ];
-      const fonts=['smallChars','chatFont','dialogFont','altFont'];
-      for(const font of fonts){
-        if(!OCR||!OCR[font]) continue;
-        for(const colors of colorSets){
-          try{
-            const r=OCR.readSmallChars(cap,OCR[font],colors);
-            if(r&&r.text&&r.text.trim()) lines.push(font+': "'+r.text+'"');
-          }catch(e2){}
-          try{
-            const r=OCR.readLine(cap,OCR[font],colors);
-            if(r&&r.text&&r.text.trim()) lines.push(font+' readLine: "'+r.text+'"');
-          }catch(e2){}
-        }
+    const testX=absX+8, testY=absY+50;
+    const cap=A1lib.capture(testX, testY, 280, 12);
+    if(!cap||!cap.data){out.textContent='Capture failed';return;}
+    const d=cap.data, w=cap.width, h=cap.height;
+    let profile='';
+    for(let x=0;x<w;x+=2){
+      let colSum=0;
+      for(let y=0;y<h;y++){
+        const i=(y*w+x)*4;
+        if(d[i]>140&&d[i+1]>130&&d[i+2]>90) colSum++;
       }
-      // Also log available OCR properties
-      lines.push('OCR keys: '+Object.keys(OCR||{}).join(','));
+      profile+=(colSum>0?'#':'.');
     }
-    out.textContent=lines.join('\n');
+    out.textContent='Cap:'+w+'x'+h+' at ('+testX+','+testY+')\nProfile (2px cols):\n'+profile;
   }catch(e){out.textContent='Error: '+e.message;}
 }
 
