@@ -84,7 +84,6 @@
     .pw{width:46px;height:4px;background:var(--border);border-radius:2px;overflow:hidden}
     .pb{height:100%;border-radius:2px;transition:width .3s}
     .pb.low{background:var(--danger)}.pb.mid{background:var(--accent)}.pb.full{background:var(--accent2)}
-    /* ARTEFACT */
     .art-card{background:var(--surface2);border:1px solid var(--border);border-radius:3px;margin:5px;padding:7px}
     .art-head{display:flex;align-items:center;gap:6px;margin-bottom:5px;flex-wrap:wrap}
     .art-name{font-family:'Cinzel',serif;font-size:11px;color:var(--accent);flex:1}
@@ -99,7 +98,6 @@
     .site-hdr{background:var(--surface);padding:4px 8px;font-family:'Cinzel',serif;
               font-size:10px;color:var(--accent2);border-bottom:1px solid var(--border);letter-spacing:.08em;
               position:sticky;top:0;z-index:1}
-    /* SESSION */
     .sg{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:7px}
     .sc{background:var(--surface2);border:1px solid var(--border);border-radius:3px;padding:7px}
     .sc h3{font-family:'Cinzel',serif;font-size:10px;color:var(--accent);margin-bottom:5px}
@@ -107,7 +105,6 @@
     .sr:last-child{border-bottom:none}
     .sv{color:var(--accent)}
     .sw{grid-column:1/-1}
-    /* OCR */
     .oa{padding:8px;display:flex;flex-direction:column;gap:6px}
     .op{background:var(--surface2);border:1px solid var(--border);border-radius:3px;
         padding:6px;min-height:70px;font-size:10px;color:var(--text);white-space:pre-wrap;
@@ -137,7 +134,6 @@
   <div class="tab" data-tab="ocr">OCR</div>
 </div>
 
-<!-- INVENTORY -->
 <div class="panel active" id="panel-inv">
   <div class="toolbar">
     <input type="text" id="search-box" class="f1" placeholder="Search…"/>
@@ -161,7 +157,6 @@
   <div class="legend" id="legend"></div>
 </div>
 
-<!-- ARTEFACTS -->
 <div class="panel" id="panel-art">
   <div class="toolbar">
     <input type="text" id="art-search" class="f1" placeholder="Search artefacts…"/>
@@ -180,7 +175,6 @@
   <div class="scroll" id="art-scroll"></div>
 </div>
 
-<!-- SESSION -->
 <div class="panel" id="panel-sess">
   <div class="toolbar">
     <button class="btn suc" id="btn-sess-start">▶ Start Session</button>
@@ -209,7 +203,6 @@
   </div>
 </div>
 
-<!-- OCR -->
 <div class="panel" id="panel-ocr">
   <div class="oa">
     <p class="oh">1. Open <strong>Material Storage</strong> in RS3<br>2. Click <strong>Locate Window</strong> and enter top-left coordinates<br>3. Tune values below if needed → Click <strong>Scan</strong></p>
@@ -321,8 +314,8 @@ let storedWinX = parseInt(localStorage.getItem('archStorageWinX')) || null;
 let storedWinY = parseInt(localStorage.getItem('archStorageWinY')) || null;
 let offsetX = 6;
 let offsetY = 62;
-let iconW = 44;
-let numH = 40;
+let iconW = 48;
+let numH = 44;
 let horizStep = 49;
 
 const STORAGE_ORDER = [
@@ -340,15 +333,21 @@ function readNumberAt(x, y, w, h) {
   try {
     const cap = A1lib.capture(x, y, w, h);
     if (!cap) return null;
+
+    // Extremely broad RS3 yellow palette
     const colors = [
-      [255,255,255], [255,220,100], [255,200,80], [240,210,90],
-      [255,215,0],   [230,190,60], [255,199,0], [255,180,80],
-      [220,160,40],  [255,240,140], [245,225,90], [255,230,150],
-      [240,200,100], [255,210,120], [230,170,50], [255,245,180],
-      [255,235,120], [245,215,70],  [220,180,90], [255,225,130],
-      [255,240,160], [240,190,70],  [255,200,90], [230,200,100],
-      [255,230,140], [245,205,80],  [255,210,110]
+      [255,255,255], [255,240,180], [255,230,150], [255,220,120],
+      [255,210,100], [255,200,80],  [255,190,60],  [255,180,40],
+      [245,225,130], [240,215,110], [240,200,90],  [235,190,80],
+      [230,180,70],  [225,170,60],  [255,235,140], [250,225,120],
+      [245,210,100], [240,195,80],  [235,185,70],  [230,175,60],
+      [255,199,0],   [255,215,0],   [255,225,50],  [255,240,100],
+      [220,160,40],  [230,170,50],  [240,180,60],  [250,190,70],
+      [255,235,120], [245,215,70],  [220,180,90],  [255,225,130],
+      [255,240,160], [240,190,70],  [255,200,90],  [230,200,100],
+      [255,230,140], [245,205,80],  [255,210,110], [230,190,70]
     ];
+
     let r;
     if (OCR && OCR.readSmallChars && OCR.smallChars) {
       try { r = OCR.readSmallChars(cap, OCR.smallChars, colors); } catch(e) {}
@@ -357,11 +356,32 @@ function readNumberAt(x, y, w, h) {
       try { r = OCR.readLine(cap, OCR.smallChars, colors); } catch(e) {}
     }
     if (r && r.text) {
-      const n = parseInt(r.text.replace(/[^0-9]/g, ''));
-      if (!isNaN(n) && n >= 0) return n;
+      const cleaned = r.text.replace(/[^0-9]/g, '');
+      const n = parseInt(cleaned);
+      if (!isNaN(n) && n >= 0) {
+        console.log(`OCR success: ${cleaned} → ${n}`);
+        return n;
+      }
     }
-  } catch(e) {}
-  return null;
+
+    // Debug fallback
+    if (cap && cap.data) {
+      let brightCount = 0;
+      for (let i = 0; i < cap.data.length; i += 4) {
+        const rVal = cap.data[i], gVal = cap.data[i+1], bVal = cap.data[i+2];
+        if (rVal > 200 && gVal > 160 && bVal > 30) brightCount++;
+      }
+      if (brightCount > 30) {
+        console.log("Bright yellow detected but OCR failed");
+      }
+    }
+
+    console.log(`OCR failed at x=${x}, y=${y}`);
+    return null;
+  } catch(e) {
+    console.error("OCR error:", e);
+    return null;
+  }
 }
 
 async function scanMaterialStorage() {
@@ -392,8 +412,8 @@ async function scanMaterialStorage() {
     offsetX   = saved.offsetX   ?? 6;
     offsetY   = saved.offsetY   ?? 62;
     horizStep = saved.horizStep ?? 49;
-    iconW     = saved.iconW     ?? 44;
-    numH      = saved.numH      ?? 40;
+    iconW     = saved.iconW     ?? 48;
+    numH      = saved.numH      ?? 44;
     document.getElementById('t-x').value = offsetX;
     document.getElementById('t-y').value = offsetY;
     document.getElementById('t-step').value = horizStep;
@@ -406,8 +426,8 @@ async function scanMaterialStorage() {
         if (id === 't-x') offsetX = parseInt(e.target.value) || 6;
         if (id === 't-y') offsetY = parseInt(e.target.value) || 62;
         if (id === 't-step') horizStep = parseInt(e.target.value) || 49;
-        if (id === 't-w') iconW = parseInt(e.target.value) || 44;
-        if (id === 't-h') numH = parseInt(e.target.value) || 40;
+        if (id === 't-w') iconW = parseInt(e.target.value) || 48;
+        if (id === 't-h') numH = parseInt(e.target.value) || 44;
         localStorage.setItem('archOcrTuners', JSON.stringify({offsetX, offsetY, horizStep, iconW, numH}));
       });
     });
@@ -443,6 +463,8 @@ async function scanMaterialStorage() {
       alt1.overLayRect(A1lib.mixColor(0,255,0), numX - 1, numY - 2, iconW + 2, numH + 4, 2500, 1);
 
       const num = await readNumberAt(numX, numY - 1, iconW, numH);
+      console.log(`${mat.padEnd(25)} | x=${numX}, y=${numY-1} | result=${num ?? 'null'}`);
+
       if (num !== null && num >= 0) {
         results[mat] = num;
         good++;
@@ -453,7 +475,7 @@ async function scanMaterialStorage() {
 
   alt1.overLayRefreshGroup('0');
   showOCRRes(results);
-  out.innerHTML = `Detected ${good} / 40 materials.<br>Green boxes = capture areas. Yellow = row.<br>Adjust X/Y/Step/W/H above and Re-Scan if needed.`;
+  out.innerHTML = `Detected ${good} / 40 materials.<br>Green boxes = capture areas. Yellow = row.<br>Check browser console (F12) for per-material debug info.`;
 }
 
 function showOCRRes(parsed){
@@ -472,7 +494,7 @@ function showOCRRes(parsed){
 }
 
 // ────────────────────────────────────────────────────────────────
-// Original functions (load, save, renderMats, etc.) – unchanged
+// The rest of your original code (load/save/render/etc.) remains below unchanged
 // ────────────────────────────────────────────────────────────────
 function load(){
   try{const s=localStorage.getItem(KEY);if(s)S=JSON.parse(s);}catch(e){}
