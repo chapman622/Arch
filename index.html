@@ -126,12 +126,10 @@
   </style>
 </head>
 <body>
-
 <header>
   <h1>⛏ Arch Tracker</h1>
   <div class="badge" id="alt1-badge">Alt1 not detected</div>
 </header>
-
 <div class="tabs">
   <div class="tab active" data-tab="inv">MATS</div>
   <div class="tab" data-tab="art">ARTEFACTS</div>
@@ -214,7 +212,7 @@
 <!-- OCR -->
 <div class="panel" id="panel-ocr">
   <div class="oa">
-    <p class="oh">1. Open <strong style="color:var(--text)">Material Storage</strong> in RS3<br/>2. Click <strong style="color:var(--text)">Locate Window</strong> and enter the screen coordinates of the top-left corner of the window (use Windows Snipping Tool or hover over it in Paint to find X,Y)<br/>3. Click <strong style="color:var(--text)">Scan</strong> to read all counts</p>
+    <p class="oh">1. Open <strong>Material Storage</strong> in RS3<br>2. Click <strong>Locate Window</strong> and enter top-left corner coordinates<br>3. Tune offsets if needed → Click <strong>Scan</strong></p>
     <div style="display:flex;gap:5px;align-items:center;flex-wrap:wrap;margin-bottom:2px">
       <button class="btn" id="btn-locate">🎯 Locate Window</button>
       <span id="locate-status" style="font-size:9px;color:var(--muted)">Window not set</span>
@@ -223,7 +221,7 @@
       <button class="btn pri" id="btn-scan">📷 Scan Screen</button>
       <button class="btn" id="btn-manual-ocr">✏ Manual Paste</button>
     </div>
-    <textarea id="paste-box" placeholder="Paste material text here (e.g. 'Third Age iron  1,240')…" style="display:none"></textarea>
+    <textarea id="paste-box" placeholder="Paste material text here (e.g. 'Third Age iron 1,240')…" style="display:none"></textarea>
     <button class="btn" id="btn-parse-paste" style="display:none">Parse Text</button>
     <div class="op" id="ocr-out">No scan yet.</div>
     <div id="ocr-results" style="display:none">
@@ -247,7 +245,6 @@
 <script>
 const CULTURE_COL={Agnostic:'#7f8c8d',Zarosian:'#9b59b6',Zamorakian:'#c0392b',
   Saradominist:'#2980b9',Armadylean:'#27ae60',Bandosian:'#d35400',Dragonkin:'#c0006a'};
-
 const MATS=[
   {name:"Third Age iron",lv:5,c:"Agnostic"},{name:"Zarosian insignia",lv:5,c:"Zarosian"},
   {name:"Samite silk",lv:12,c:"Agnostic"},{name:"Imperial steel",lv:12,c:"Zarosian"},
@@ -270,7 +267,6 @@ const MATS=[
   {name:"Praesulic essence (magic)",lv:87,c:"Zarosian"},{name:"Quintessence",lv:87,c:"Dragonkin"},
   {name:"Imbued slate",lv:90,c:"Dragonkin"},{name:"Warforged bronze",lv:93,c:"Bandosian"},
 ];
-
 const ARTEFACTS=[
   // Kharid-et
   {name:"Centurion's dress sword",site:"Kharid-et",lv:5,xp:500,mats:{"Third Age iron":16,"Zarosian insignia":14}},
@@ -328,6 +324,154 @@ const ARTEFACTS=[
 // STATE
 const KEY='archtracker_v3';
 let S={counts:{},goals:{},session:null};
+let ocrParsed={};
+
+// ────────────────────────────────────────────────────────────────
+// OCR Improvements
+// ────────────────────────────────────────────────────────────────
+let storedWinX = parseInt(localStorage.getItem('archStorageWinX')) || null;
+let storedWinY = parseInt(localStorage.getItem('archStorageWinY')) || null;
+let offsetX = 8, offsetY = 65, iconW = 38, numH = 16;
+
+const STORAGE_ORDER = [
+  'Third Age iron','Samite silk','White oak','Goldrune','Orthenglass',
+  'Vellum','Leather scraps','Soapstone','Animal furs','Fossilised bone',
+  'Stormguard steel','Wings of War','Armadylean yellow','Aetherium alloy','Quintessence',
+  'Malachite green','Mark of the Kyzaj','Vulcanised rubber','Warforged bronze',"Yu'biusk clay",
+  'Dragon metal','Orgone','Compass rose','Carbon black','Felt',
+  'Keramos','White marble','Cobalt blue','Everlight silvthril','Star of Saradomin',
+  'Cadmium red','Chaotic brimstone','Demonhide','Eye of Dagon','Hellfire metal',
+  'Zarosian insignia','Imperial steel','Ancient vis','Tyrian purple','Blood of Orcus',
+];
+
+function readNumberAt(x, y, w, h) {
+  try {
+    const cap = A1lib.capture(x, y, w, h);
+    if (!cap) return null;
+    const colors = [
+      [255,255,255], [255,220,100], [255,200,80], [240,210,90],
+      [255,215,0],   [230,190,60], [255,199,0], [255,180,80],
+      [220,160,40],  [255,240,140], [245,225,90], [255,199,0]
+    ];
+    let r;
+    if (OCR && OCR.readSmallChars && OCR.smallChars) {
+      try { r = OCR.readSmallChars(cap, OCR.smallChars, colors); } catch(e) {}
+    }
+    if (!r && OCR && OCR.readLine && OCR.smallChars) {
+      try { r = OCR.readLine(cap, OCR.smallChars, colors); } catch(e) {}
+    }
+    if (r && r.text) {
+      const n = parseInt(r.text.replace(/[^0-9]/g, ''));
+      if (!isNaN(n) && n >= 0) return n;
+    }
+  } catch(e) {}
+  return null;
+}
+
+async function scanMaterialStorage() {
+  const out = document.getElementById('ocr-out');
+  if (!storedWinX || !storedWinY) {
+    out.textContent = 'Locate window first.';
+    return;
+  }
+  const absX = storedWinX, absY = storedWinY;
+
+  // Inject tuner controls if not present
+  let tuners = document.getElementById('tuners');
+  if (!tuners) {
+    tuners = document.createElement('div');
+    tuners.id = 'tuners';
+    tuners.style.cssText = 'display:flex;gap:6px;align-items:center;margin:6px 0;font-size:9px;color:var(--muted);flex-wrap:wrap';
+    tuners.innerHTML = `
+      X offset: <input id="t-x" type="number" min="-20" max="50" style="width:50px;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:2px"/>
+      Y offset: <input id="t-y" type="number" min="40" max="120" style="width:50px;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:2px"/>
+      W: <input id="t-w" type="number" min="30" max="50" style="width:45px;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:2px"/>
+      H: <input id="t-h" type="number" min="12" max="24" style="width:45px;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:2px"/>
+      <button class="btn suc" id="t-rescan" style="font-size:10px;padding:2px 6px">Re-Scan</button>
+    `;
+    const oa = document.querySelector('.oa');
+    oa.insertBefore(tuners, document.getElementById('btn-scan').parentNode.nextSibling);
+    
+    // Load saved tuners
+    const saved = JSON.parse(localStorage.getItem('archOcrTuners') || '{}');
+    offsetX = saved.offsetX ?? 8;
+    offsetY = saved.offsetY ?? 65;
+    iconW  = saved.iconW  ?? 38;
+    numH   = saved.numH   ?? 16;
+    document.getElementById('t-x').value = offsetX;
+    document.getElementById('t-y').value = offsetY;
+    document.getElementById('t-w').value = iconW;
+    document.getElementById('t-h').value = numH;
+
+    // Save changes
+    ['t-x','t-y','t-w','t-h'].forEach(id => {
+      document.getElementById(id).addEventListener('input', e => {
+        if (id === 't-x') offsetX = parseInt(e.target.value) || 8;
+        if (id === 't-y') offsetY = parseInt(e.target.value) || 65;
+        if (id === 't-w') iconW  = parseInt(e.target.value) || 38;
+        if (id === 't-h') numH   = parseInt(e.target.value) || 16;
+        localStorage.setItem('archOcrTuners', JSON.stringify({offsetX, offsetY, iconW, numH}));
+      });
+    });
+    document.getElementById('t-rescan').addEventListener('click', scanMaterialStorage);
+  }
+
+  out.textContent = 'Scanning all materials...';
+  const results = {};
+  let good = 0;
+
+  const ROWS = [
+    {start: 0,  dy: offsetY},        // Agnostic 1
+    {start: 5,  dy: offsetY + 42},   // Agnostic 2
+    {start:10,  dy: offsetY + 77},   // Armadylean
+    {start:15,  dy: offsetY + 112},  // Bandosian
+    {start:20,  dy: offsetY + 147},  // Dragonkin
+    {start:25,  dy: offsetY + 212},  // Saradominist
+    {start:30,  dy: offsetY + 252},  // Zamorakian
+    {start:35,  dy: offsetY + 287}   // Zarosian
+  ];
+
+  for (let row of ROWS) {
+    const numY = absY + row.dy;
+    alt1.overLayRect(A1lib.mixColor(255,255,0), absX+2, numY-3, iconW*5 + 20, numH+6, 2500, 1);
+    for (let slot = 0; slot < 5; slot++) {
+      const idx = row.start + slot;
+      const mat = STORAGE_ORDER[idx];
+      if (!mat) continue;
+      const numX = absX + offsetX + (slot * iconW);
+      alt1.overLayRect(A1lib.mixColor(0,255,0), numX, numY-1, iconW, numH, 2500, 1);
+      const num = await readNumberAt(numX, numY-1, iconW, numH);
+      if (num !== null && num >= 0) {
+        results[mat] = num;
+        good++;
+      }
+      await new Promise(r => setTimeout(r, 40));
+    }
+  }
+
+  alt1.overLayRefreshGroup('0');
+  showOCRRes(results);
+  out.innerHTML = `Detected ${good} / 40 materials.<br>Green boxes = capture areas. Yellow = row.<br>Adjust X/Y/W/H above and Re-Scan if needed.`;
+}
+
+function showOCRRes(parsed){
+  ocrParsed = parsed;
+  const keys = Object.keys(parsed).filter(k => parsed[k] > 0);
+  document.getElementById('ocr-summary').textContent = keys.length 
+    ? `Detected ${keys.length} non-zero material(s):` 
+    : 'All materials read (showing non-zero only).';
+  document.getElementById('ocr-match-list').innerHTML = keys.map(k =>
+    `<div style="display:flex;justify-content:space-between;padding:2px 0;border-bottom:1px solid var(--border)">
+       <span style="color:var(--accent2)">${k}</span>
+       <span style="color:var(--accent)">${parsed[k].toLocaleString()}</span>
+     </div>`
+  ).join('');
+  document.getElementById('ocr-results').style.display = 'block';
+}
+
+// ────────────────────────────────────────────────────────────────
+// Original functions (load, save, renderMats, etc.)
+// ────────────────────────────────────────────────────────────────
 function load(){
   try{const s=localStorage.getItem(KEY);if(s)S=JSON.parse(s);}catch(e){}
   MATS.forEach(m=>{if(S.counts[m.name]==null)S.counts[m.name]=0;if(S.goals[m.name]==null)S.goals[m.name]=0;});
@@ -335,12 +479,12 @@ function load(){
 }
 function save(){localStorage.setItem(KEY,JSON.stringify(S));updateStatus();}
 
-// MATS
 function filteredMats(){
   const q=document.getElementById('search-box').value.toLowerCase();
   const c=document.getElementById('filter-culture').value;
   return MATS.filter(m=>((!c||m.c===c)&&(!q||m.name.toLowerCase().includes(q))));
 }
+
 function renderMats(){
   const tb=document.getElementById('mat-tbody');tb.innerHTML='';
   filteredMats().forEach(mat=>{
@@ -363,10 +507,12 @@ function renderMats(){
     tb.appendChild(tr);
   });
 }
+
 function renderLegend(){
   document.getElementById('legend').innerHTML=Object.entries(CULTURE_COL).map(([n,c])=>
     `<div class="li"><span class="cdot" style="background:${c}"></span>${n}</div>`).join('');
 }
+
 document.getElementById('mat-tbody').addEventListener('click',e=>{
   const b=e.target.closest('.btn-xs');if(!b)return;
   const n=b.dataset.n;
@@ -374,12 +520,15 @@ document.getElementById('mat-tbody').addEventListener('click',e=>{
   if(b.dataset.a==='dec')S.counts[n]=Math.max(0,(S.counts[n]||0)-1);
   save();renderMats();renderArts();renderSessionMats();
 });
+
 document.getElementById('mat-tbody').addEventListener('change',e=>{
   if(e.target.matches('.ci')){S.counts[e.target.dataset.n]=Math.max(0,parseInt(e.target.value)||0);save();renderMats();renderArts();renderSessionMats();}
   if(e.target.matches('.gi')){S.goals[e.target.dataset.g]=Math.max(0,parseInt(e.target.value)||0);save();renderMats();}
 });
+
 document.getElementById('search-box').addEventListener('input',renderMats);
 document.getElementById('filter-culture').addEventListener('change',renderMats);
+
 document.getElementById('btn-reset-all').addEventListener('click',()=>{
   if(!confirm('Reset ALL counts to 0?'))return;
   MATS.forEach(m=>S.counts[m.name]=0);save();renderMats();renderArts();renderSessionMats();
@@ -388,6 +537,7 @@ document.getElementById('btn-reset-all').addEventListener('click',()=>{
 // ARTEFACTS
 function canRestore(art){return Object.entries(art.mats).every(([m,n])=>(S.counts[m]||0)>=n);}
 function matCulture(name){return MATS.find(x=>x.name===name)?.c||'Agnostic';}
+
 function renderArts(){
   const q=document.getElementById('art-search').value.toLowerCase();
   const site=document.getElementById('art-site').value;
@@ -407,7 +557,6 @@ function renderArts(){
     const hdr=document.createElement('div');hdr.className='site-hdr';hdr.textContent=s;scroll.appendChild(hdr);
     arts.sort((a,b)=>a.lv-b.lv).forEach(art=>{
       const can=canRestore(art);
-      const card=document.createElement('div');card.className='art-card';
       const matRows=Object.entries(art.mats).map(([m,need])=>{
         const have=S.counts[m]||0,ok=have>=need;
         return `<div class="mr ${ok?'ok':'bad'}">
@@ -416,6 +565,7 @@ function renderArts(){
           <span class="need"><span class="have">${have.toLocaleString()}</span> / ${need}</span>
         </div>`;
       }).join('');
+      const card=document.createElement('div');card.className='art-card';
       card.innerHTML=`<div class="art-head">
           <span class="art-name">${art.name}</span>
           <span class="art-lvl">Lv ${art.lv}</span>
@@ -438,6 +588,7 @@ function renderArts(){
     });
   });
 }
+
 document.getElementById('art-search').addEventListener('input',renderArts);
 document.getElementById('art-site').addEventListener('change',renderArts);
 document.getElementById('art-filter').addEventListener('change',renderArts);
@@ -454,7 +605,6 @@ function tickSession(){
   const h=Math.floor(el/3600000),m=Math.floor((el%3600000)/60000),s=Math.floor((el%60000)/1000);
   document.getElementById('sess-timer').textContent=
     `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
-  // update live stats
   const totalXp=sessRestores.reduce((a,r)=>a+r.xp,0);
   const elHr=(Date.now()-sessStart)/3600000;
   document.getElementById('s-arts').textContent=sessRestores.length;
@@ -522,82 +672,12 @@ document.getElementById('btn-sess-reset').addEventListener('click',()=>{
   document.getElementById('recent-restores').textContent='';
 });
 
-// OCR
-let ocrParsed={};
-let storedWinX=parseInt(localStorage.getItem('archStorageWinX'))||null;
-let storedWinY=parseInt(localStorage.getItem('archStorageWinY'))||null;
-
-// Storage layout - fixed grid positions relative to window top-left
-const STORAGE_ORDER=[
-  'Third Age iron','Samite silk','White oak','Goldrune','Orthenglass',
-  'Vellum','Leather scraps','Soapstone','Animal furs','Fossilised bone',
-  'Stormguard steel','Wings of War','Armadylean yellow','Aetherium alloy','Quintessence',
-  'Malachite green','Mark of the Kyzaj','Vulcanised rubber','Warforged bronze',"Yu'biusk clay",
-  'Dragon metal','Orgone','Compass rose','Carbon black','Felt',
-  'Keramos','White marble','Cobalt blue','Everlight silvthril','Star of Saradomin',
-  'Cadmium red','Chaotic brimstone','Demonhide','Eye of Dagon','Hellfire metal',
-  'Zarosian insignia','Imperial steel','Ancient vis','Tyrian purple','Blood of Orcus',
-];
-const SECTION_OFFSETS=[
-  {label:'Agnostic',    idx:0,  y:52,  count:10},
-  {label:'Armadylean',  idx:10, y:130, count:5},
-  {label:'Bandosian',   idx:15, y:170, count:5},
-  {label:'Dragonkin',   idx:20, y:210, count:5},
-  {label:'Saradominist',idx:25, y:290, count:5},
-  {label:'Zamorakian',  idx:30, y:330, count:5},
-  {label:'Zarosian',    idx:35, y:370, count:5},
-];
-const ICON_W=38;
-const NUM_Y_OFFSET=0;
-
-function parseText(text){
-  const res={};
-  STORAGE_ORDER.forEach(name=>{
-    const esc=name.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
-    let match=text.match(new RegExp(esc+'[\\s\\S]{0,30}?([\\d,]+)','i'));
-    if(match){res[name]=parseInt(match[1].replace(/,/g,''));return;}
-    match=text.match(new RegExp('([\\d,]+)[^\\n]{0,15}'+esc,'i'));
-    if(match) res[name]=parseInt(match[1].replace(/,/g,''));
-  });
-  return res;
-}
-
-function showOCRRes(parsed){
-  ocrParsed=parsed;
-  const keys=Object.keys(parsed).filter(k=>parsed[k]>0);
-  document.getElementById('ocr-summary').textContent=keys.length?('Detected '+keys.length+' non-zero material(s):'):'All materials read (showing non-zero only).';
-  document.getElementById('ocr-match-list').innerHTML=keys.map(k=>
-    '<div style="display:flex;justify-content:space-between;padding:2px 0;border-bottom:1px solid var(--border)">'+
-    '<span style="color:var(--accent2)">'+k+'</span><span style="color:var(--accent)">'+parsed[k].toLocaleString()+'</span>'+
-    '</div>').join('');
-  document.getElementById('ocr-results').style.display='block';
-}
-
-function readNumberAt(x,y,w,h){
-  try{
-    const cap=A1lib.capture(x,y,w,h);
-    if(!cap) return null;
-    const colors=[[255,255,255],[255,199,0],[220,220,200],[200,200,200]];
-    if(OCR){
-      if(OCR.readSmallChars&&OCR.smallChars){
-        try{const r=OCR.readSmallChars(cap,OCR.smallChars,colors);if(r&&r.text){const n=parseInt(r.text.replace(/[^0-9]/g,''));if(!isNaN(n)&&n>=0)return n;}}catch(e){}
-      }
-      if(OCR.readLine&&OCR.smallChars){
-        try{const r=OCR.readLine(cap,OCR.smallChars,colors);if(r&&r.text){const n=parseInt(r.text.replace(/[^0-9]/g,''));if(!isNaN(n)&&n>=0)return n;}}catch(e){}
-      }
-    }
-  }catch(e){}
-  return null;
-}
-
+// OCR LOCATE
 function startLocate(){
   const status=document.getElementById('locate-status');
   const btn=document.getElementById('btn-locate');
-
-  // Show coordinate input boxes
   const existing=document.getElementById('coord-input');
   if(existing){ existing.remove(); return; }
-
   const div=document.createElement('div');
   div.id='coord-input';
   div.style.cssText='display:flex;gap:4px;align-items:center;margin-top:4px;flex-wrap:wrap';
@@ -608,9 +688,7 @@ function startLocate(){
     '<input type="number" id="coord-y" style="width:55px;background:var(--bg);border:1px solid var(--border);color:var(--text);font-family:inherit;font-size:10px;padding:2px 4px;border-radius:2px" placeholder="e.g. 200"/>'+
     '<button class="btn suc" id="btn-coord-set" style="font-size:9px;padding:2px 6px">Set</button>'+
     '<span style="font-size:9px;color:var(--muted)">(top-left corner of title bar)</span>';
-
   btn.parentNode.insertBefore(div, btn.nextSibling);
-
   document.getElementById('btn-coord-set').addEventListener('click',()=>{
     const x=parseInt(document.getElementById('coord-x').value);
     const y=parseInt(document.getElementById('coord-y').value);
@@ -626,94 +704,9 @@ function startLocate(){
     status.style.color='var(--accent2)';
     div.remove();
   });
-
   status.textContent='Enter the screen coordinates of the top-left corner of the Material Storage window.';
   status.style.color='var(--accent)';
 }
-
-async function scanMaterialStorage(){
-  const out=document.getElementById('ocr-out');
-  storedWinX=storedWinX||parseInt(localStorage.getItem('archStorageWinX'))||null;
-  storedWinY=storedWinY||parseInt(localStorage.getItem('archStorageWinY'))||null;
-  if(!storedWinX||!storedWinY){
-    out.textContent='Window not located. Click Locate Window first, then hover your mouse over the top-left corner of the Material Storage window for 5 seconds.';
-    return;
-  }
-  const absX=storedWinX, absY=storedWinY;
-  out.textContent='Scanning...';
-  try{
-    function getSegments(cap){
-      if(!cap||!cap.data) return [];
-      const d=cap.data, w=cap.width, h=cap.height;
-      const cols=[];
-      for(let x=0;x<w;x++){
-        let bright=0;
-        for(let y=0;y<h;y++){
-          const i=(y*w+x)*4;
-          if(d[i]>130&&d[i+1]>120&&d[i+2]>80) bright++;
-        }
-        cols.push(bright);
-      }
-      const segs=[];
-      let start=-1;
-      for(let x=0;x<=cols.length;x++){
-        const on=x<cols.length&&cols[x]>0;
-        if(on&&start===-1) start=x;
-        if(!on&&start!==-1){
-          const segCols=cols.slice(start,x);
-          const total=segCols.reduce((a,b)=>a+b,0);
-          segs.push({w:x-start, total, cols:segCols});
-          start=-1;
-        }
-      }
-      return segs;
-    }
-
-    const numY=absY+65;
-    const yellow=A1lib.mixColor(255,199,0);
-    const green=A1lib.mixColor(100,255,100);
-    const red=A1lib.mixColor(255,80,80);
-
-    // Draw a rectangle around the whole agnostic row area
-    alt1.overLayRect(yellow, absX+6, numY-1, 385, 14, 3000, 2);
-
-    // Draw individual rectangles for each of the first 5 icon number regions
-    const lines=[];
-    for(let i=0;i<5;i++){
-      const numX=absX+8+(i*ICON_W);
-      // Draw green box around each number read region
-      alt1.overLayRect(green, numX-2, numY-1, ICON_W, 14, 3000, 1);
-      const cap=A1lib.capture(numX-2, numY, ICON_W, 12);
-      const segs=getSegments(cap);
-      const segStr=segs.map(s=>'[w='+s.w+' t='+s.total+']').join(' ');
-      lines.push(STORAGE_ORDER[i].substring(0,12)+': '+segStr);
-    }
-
-    alt1.overLayRefreshGroup('0');
-    out.textContent='Segment analysis (expected: 1879,634,3877,2775,108):\n\n'+lines.join('\n');
-  }catch(e){out.textContent='Error: '+e.message;}
-}
-
-document.getElementById('btn-scan').addEventListener('click',()=>{
-  const out=document.getElementById('ocr-out');
-  if(!window.alt1){out.textContent='Alt1 not detected. Use Manual Paste.';return;}
-  scanMaterialStorage();
-});
-document.getElementById('btn-locate').addEventListener('click',()=>{
-  if(!window.alt1){document.getElementById('locate-status').textContent='Alt1 not detected.';return;}
-  startLocate();
-});
-document.getElementById('btn-ocr-apply').addEventListener('click',()=>{
-  Object.entries(ocrParsed).forEach(([m,v])=>{if(S.counts[m]!=null)S.counts[m]=v;});
-  save();renderMats();renderArts();renderSessionMats();
-  document.getElementById('ocr-results').style.display='none';
-  document.getElementById('ocr-out').textContent='✔ Applied '+Object.keys(ocrParsed).length+' material values to inventory.';
-  ocrParsed={};
-});
-document.getElementById('btn-ocr-discard').addEventListener('click',()=>{
-  document.getElementById('ocr-results').style.display='none';
-  document.getElementById('ocr-out').textContent='Discarded.';ocrParsed={};
-});
 
 // STATUS
 function updateStatus(){
@@ -768,6 +761,21 @@ load();renderMats();renderLegend();renderArts();updateStatus();restoreSession();
 window.addEventListener('load',()=>{
   if(typeof A1lib!=='undefined') initAlt1();
   else document.getElementById('alt1-badge').textContent='Alt1 not detected';
+});
+
+// OCR BUTTONS
+document.getElementById('btn-scan').addEventListener('click', scanMaterialStorage);
+document.getElementById('btn-locate').addEventListener('click', startLocate);
+document.getElementById('btn-ocr-apply').addEventListener('click',()=>{
+  Object.entries(ocrParsed).forEach(([m,v])=>{if(S.counts[m]!=null)S.counts[m]=v;});
+  save();renderMats();renderArts();renderSessionMats();
+  document.getElementById('ocr-results').style.display='none';
+  document.getElementById('ocr-out').textContent='✔ Applied '+Object.keys(ocrParsed).length+' material values.';
+  ocrParsed={};
+});
+document.getElementById('btn-ocr-discard').addEventListener('click',()=>{
+  document.getElementById('ocr-results').style.display='none';
+  document.getElementById('ocr-out').textContent='Discarded.';ocrParsed={};
 });
 </script>
 </body>
