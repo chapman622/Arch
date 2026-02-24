@@ -205,7 +205,7 @@
 
 <div class="panel" id="panel-ocr">
   <div class="oa">
-    <p class="oh">1. Open Material Storage<br>2. Locate window (top-left + 500×342 px)<br>3. Tune if needed<br>4. Scroll to top → Scan Top<br>5. Scroll down → Scan Bottom</p>
+    <p class="oh">1. Open Material Storage<br>2. Locate window (top-left + 500×342 px)<br>3. Tune if needed<br>4. Scroll to top → Scan Top<br>5. Scroll down until Dragonkin visible → Scan Bottom</p>
     <div style="display:flex;gap:5px;align-items:center;flex-wrap:wrap;margin-bottom:2px">
       <button class="btn" id="btn-locate">🎯 Locate Window</button>
       <span id="locate-status" style="font-size:9px;color:var(--muted)">Window not set</span>
@@ -318,7 +318,7 @@ const STORAGE_ORDER = [
   'Third Age iron','Samite silk','White oak','Goldrune','Orthenglass',
   'Vellum','Leather scraps','Soapstone','Animal furs','Fossilised bone',
   'Stormguard steel','Wings of War','Armadylean yellow','Aetherium alloy','Quintessence',
-  'Malachite green','Mark of the Kyzaj','Vulcanised rubber','Warforged bronze','Yu\'biusk clay',
+  'Malachite green','Mark of the Kyzaj','Vulcanised rubber','Warforged bronze',"Yu'biusk clay",
   'Dragon metal','Orgone','Compass rose','Carbon black','Felt',
   'Keramos','White marble','Cobalt blue','Everlight silvthril','Star of Saradomin',
   'Cadmium red','Chaotic brimstone','Demonhide','Eye of Dagon','Hellfire metal',
@@ -403,20 +403,20 @@ function readNumberAt(x, y, w, h) {
     }
 
     if (brightCount > 50) {
-      console.log(`Fallback: ${brightCount} bright pixels at x=${x}, y=${y} - returning 1`);
+      console.log(`Fallback: ${brightCount} bright pixels detected at x=${x}, y=${y} - assuming non-zero`);
       return 1;
     }
 
     console.log(`OCR failed at x=${x}, y=${y} - brightCount=${brightCount}`);
     return null;
   } catch(e) {
-    console.error("OCR error:", e);
+    console.error("OCR global error:", e);
     return null;
   }
 }
 
 // ────────────────────────────────────────────────
-// Scanning logic
+// Scanning logic – same Y offsets for both scans
 // ────────────────────────────────────────────────
 async function performScan(startIdx, endIdx, label) {
   const out = document.getElementById('ocr-out');
@@ -426,9 +426,9 @@ async function performScan(startIdx, endIdx, label) {
   }
   const absX = storedWinX, absY = storedWinY;
 
-  // Big yellow validation box
+  // Draw big yellow validation box
   if (storedWinWidth && storedWinHeight) {
-    alt1.overLayRect(A1lib.mixColor(255, 200, 0), absX, absY, storedWinWidth, storedWinHeight, 4000, 3);
+    alt1.overLayRect(A1lib.mixColor(255, 200, 0), absX, absY, storedWinWidth, storedWinHeight, 5000, 3);
   }
 
   out.textContent = `Scanning ${label}...`;
@@ -436,23 +436,29 @@ async function performScan(startIdx, endIdx, label) {
   let good = 0;
 
   const ROWS = [
-    {start: 0,  dy: offsetY +  0   },
-    {start: 5,  dy: offsetY + 74   },
-    {start:10,  dy: offsetY + 148  },
-    {start:15,  dy: offsetY + 222  },
-    {start:20,  dy: offsetY + 296  },
-    {start:25,  dy: offsetY + 370 + 8 },
-    {start:30,  dy: offsetY + 444 + 8 },
-    {start:35,  dy: offsetY + 518 + 8 }
+    { dy: offsetY +  0   },
+    { dy: offsetY + 74   },
+    { dy: offsetY + 148  },
+    { dy: offsetY + 222  },
+    { dy: offsetY + 296  },
+    { dy: offsetY + 370 + 8 },
+    { dy: offsetY + 444 + 8 },
+    { dy: offsetY + 518 + 8 }
   ];
 
-  console.log(`=== ${label.toUpperCase()} SCAN (${startIdx}–${endIdx}) ===`);
+  console.log(`=== STARTING ${label.toUpperCase()} SCAN (${startIdx}–${endIdx}) ===`);
+  console.log("Window top-left:", absX, absY);
+  console.log("Tuners:", {offsetX, offsetY, horizStep, iconW, numH});
 
-  for (let row of ROWS) {
+  for (let rowIdx = 0; rowIdx < ROWS.length; rowIdx++) {
+    const row = ROWS[rowIdx];
     const numY = absY + row.dy;
 
+    const totalRowWidth = (5 * horizStep) - (horizStep - iconW) + 20;
+    alt1.overLayRect(A1lib.mixColor(255,255,0), absX + 2, numY - 4, totalRowWidth, numH + 8, 2500, 1);
+
     for (let slot = 0; slot < 5; slot++) {
-      const idx = row.start + slot;
+      const idx = rowIdx * 5 + slot;
       if (idx < startIdx || idx > endIdx) continue;
 
       const mat = STORAGE_ORDER[idx];
@@ -462,7 +468,7 @@ async function performScan(startIdx, endIdx, label) {
       alt1.overLayRect(A1lib.mixColor(0,255,0), numX - 1, numY - 2, iconW + 2, numH + 4, 2500, 1);
 
       const num = await readNumberAt(numX, numY - 1, iconW, numH);
-      console.log(`${mat.padEnd(25)} | x=${numX}, y=${numY-1} | ${num ?? 'null'}`);
+      console.log(`${mat.padEnd(25)} | x=${numX}, y=${numY-1} | result=${num ?? 'null'}`);
 
       if (num !== null && num >= 0) {
         results[mat] = num;
@@ -477,7 +483,7 @@ async function performScan(startIdx, endIdx, label) {
   Object.assign(ocrParsed, results);
   showOCRRes(ocrParsed);
 
-  out.innerHTML = `Added ${good} materials from ${label}.<br>Total: ${Object.keys(ocrParsed).length}<br>Run the other scan then Apply.`;
+  out.innerHTML = `Added ${good} materials from ${label}.<br>Total detected: ${Object.keys(ocrParsed).length}<br>Run the other scan if needed, then Apply.`;
 }
 
 function scanTop() {
@@ -489,13 +495,14 @@ function scanBottom() {
 }
 
 // ────────────────────────────────────────────────
-// Results UI
+// Results display
 // ────────────────────────────────────────────────
 function showOCRRes(parsed){
+  ocrParsed = parsed;
   const keys = Object.keys(parsed).filter(k => parsed[k] > 0);
   document.getElementById('ocr-summary').textContent = keys.length 
     ? `Detected ${keys.length} non-zero:` 
-    : 'No non-zero values yet.';
+    : 'No non-zero detected yet.';
   document.getElementById('ocr-match-list').innerHTML = keys.map(k =>
     `<div style="display:flex;justify-content:space-between;padding:2px 0;border-bottom:1px solid var(--border)">
        <span style="color:var(--accent2)">${k}</span>
@@ -528,6 +535,7 @@ function startLocate(){
     <input type="number" id="coord-h" style="width:80px;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:2px" placeholder="342" value="${storedWinHeight}">
     <button class="btn suc" id="btn-coord-set" style="font-size:9px;padding:3px 8px">Set & Save</button>
     <button class="btn" id="btn-validate" style="font-size:9px;padding:3px 8px">Validate Box</button>
+    <span style="font-size:9px;color:var(--muted)">(measure once via screenshot)</span>
   `;
   btn.parentNode.insertBefore(div, btn.nextSibling);
 
@@ -538,35 +546,38 @@ function startLocate(){
     const h = parseInt(document.getElementById('coord-h').value);
 
     if (isNaN(x) || isNaN(y) || isNaN(w) || isNaN(h) || x <= 0 || y <= 0 || w < 400 || h < 300) {
-      status.textContent = 'Enter valid numbers';
+      status.textContent = 'Enter valid numbers (width/height at least ~400×300)';
       status.style.color = 'var(--danger)';
       return;
     }
 
-    storedWinX = x; storedWinY = y;
-    storedWinWidth = w; storedWinHeight = h;
+    storedWinX = x;
+    storedWinY = y;
+    storedWinWidth = w;
+    storedWinHeight = h;
 
     localStorage.setItem('archStorageWinX', x);
     localStorage.setItem('archStorageWinY', y);
     localStorage.setItem('archStorageWinWidth', w);
     localStorage.setItem('archStorageWinHeight', h);
 
-    status.textContent = `Saved: (${x}, ${y}) - ${w}×${h} px`;
+    status.textContent = `Saved: (${x}, ${y}) - ${w}×${h} px ✔ Ready to scan`;
     status.style.color = 'var(--accent2)';
     div.remove();
   });
 
   document.getElementById('btn-validate').addEventListener('click', () => {
-    if (!storedWinX || !storedWinY) {
-      status.textContent = 'Set coordinates first';
+    if (!storedWinX || !storedWinY || !storedWinWidth || !storedWinHeight) {
+      status.textContent = 'Set coordinates and size first';
+      status.style.color = 'var(--danger)';
       return;
     }
-    alt1.overLayRect(A1lib.mixColor(255,200,0), storedWinX, storedWinY, storedWinWidth, storedWinHeight, 8000, 3);
-    status.textContent = 'Yellow box drawn – check alignment';
+    alt1.overLayRect(A1lib.mixColor(255, 200, 0), storedWinX, storedWinY, storedWinWidth, storedWinHeight, 8000, 3);
+    status.textContent = 'Big yellow box drawn — check if it exactly fits the Material Storage window';
+    status.style.color = 'var(--accent)';
   });
 }
 
-// Tuners panel
 function initTuners() {
   if (document.getElementById('tuners')) return;
 
@@ -579,7 +590,7 @@ function initTuners() {
     Step: <input id="t-step" type="number" min="40" max="60" style="width:50px;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:2px"/>
     W: <input id="t-w" type="number" min="30" max="70" style="width:45px;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:2px"/>
     H: <input id="t-h" type="number" min="30" max="70" style="width:45px;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:2px"/>
-    <button class="btn suc" id="t-rescan" style="font-size:10px;padding:2px 6px">Re-Scan Top</button>
+    <button class="btn suc" id="t-rescan-top" style="font-size:10px;padding:2px 6px">Re-Scan Top</button>
   `;
   const oa = document.querySelector('.oa');
   oa.insertBefore(tuners, document.getElementById('btn-scan-top').parentNode.nextSibling);
@@ -608,11 +619,11 @@ function initTuners() {
       localStorage.setItem('archOcrTuners', JSON.stringify({offsetX, offsetY, horizStep, iconW, numH}));
     });
   });
-  document.getElementById('t-rescan').addEventListener('click', scanTop);
+  document.getElementById('t-rescan-top').addEventListener('click', scanTop);
 }
 
 // ────────────────────────────────────────────────
-// Core logic (your original functions)
+// Original logic (load/save/render/etc.)
 // ────────────────────────────────────────────────
 function load(){
   try{const s=localStorage.getItem(KEY);if(s)S=JSON.parse(s);}catch(e){}
@@ -844,16 +855,22 @@ document.getElementById('btn-scan-top').addEventListener('click', () => {
 });
 document.getElementById('btn-scan-bottom').addEventListener('click', scanBottom);
 document.getElementById('btn-locate').addEventListener('click', startLocate);
-document.getElementById('btn-ocr-apply').addEventListener('click',()=>{
-  Object.entries(ocrParsed).forEach(([m,v])=>{if(S.counts[m]!=null)S.counts[m]=v;});
-  save();renderMats();renderArts();renderSessionMats();
-  document.getElementById('ocr-results').style.display='none';
-  document.getElementById('ocr-out').textContent='Applied detected values.';
-  ocrParsed={};
+document.getElementById('btn-ocr-apply').addEventListener('click', () => {
+  Object.entries(ocrParsed).forEach(([m,v]) => {
+    if (S.counts[m] !== undefined) S.counts[m] = v;
+  });
+  save();
+  renderMats();
+  renderArts();
+  renderSessionMats();
+  document.getElementById('ocr-results').style.display = 'none';
+  document.getElementById('ocr-out').textContent = 'Applied detected values to inventory.';
+  ocrParsed = {};
 });
-document.getElementById('btn-ocr-discard').addEventListener('click',()=>{
-  document.getElementById('ocr-results').style.display='none';
-  document.getElementById('ocr-out').textContent='Discarded.';ocrParsed={};
+document.getElementById('btn-ocr-discard').addEventListener('click', () => {
+  document.getElementById('ocr-results').style.display = 'none';
+  document.getElementById('ocr-out').textContent = 'Discarded.';
+  ocrParsed = {};
 });
 
 // Initial load
