@@ -331,10 +331,13 @@ const STORAGE_ORDER = [
 
 function readNumberAt(x, y, w, h) {
   try {
-    const cap = A1lib.capture(x, y, w, h);
+    // Larger capture for better context
+    const captureW = 60;
+    const captureH = 50;
+    const cap = A1lib.capture(x - 6, y - 7, captureW, captureH);
     if (!cap) return null;
 
-    // Extremely broad RS3 yellow palette
+    // Ultra-broad RS3 yellow palette
     const colors = [
       [255,255,255], [255,240,180], [255,230,150], [255,220,120],
       [255,210,100], [255,200,80],  [255,190,60],  [255,180,40],
@@ -345,41 +348,57 @@ function readNumberAt(x, y, w, h) {
       [220,160,40],  [230,170,50],  [240,180,60],  [250,190,70],
       [255,235,120], [245,215,70],  [220,180,90],  [255,225,130],
       [255,240,160], [240,190,70],  [255,200,90],  [230,200,100],
-      [255,230,140], [245,205,80],  [255,210,110], [230,190,70]
+      [255,230,140], [245,205,80],  [255,210,110], [230,190,70],
+      [240,220,130], [255,245,180], [235,195,90],  [255,235,140],
+      [245,210,110], [230,180,80],  [255,220,90]
     ];
 
     let r;
     if (OCR && OCR.readSmallChars && OCR.smallChars) {
-      try { r = OCR.readSmallChars(cap, OCR.smallChars, colors); } catch(e) {}
-    }
-    if (!r && OCR && OCR.readLine && OCR.smallChars) {
-      try { r = OCR.readLine(cap, OCR.smallChars, colors); } catch(e) {}
-    }
-    if (r && r.text) {
-      const cleaned = r.text.replace(/[^0-9]/g, '');
-      const n = parseInt(cleaned);
-      if (!isNaN(n) && n >= 0) {
-        console.log(`OCR success: ${cleaned} → ${n}`);
-        return n;
-      }
-    }
-
-    // Debug fallback
-    if (cap && cap.data) {
-      let brightCount = 0;
-      for (let i = 0; i < cap.data.length; i += 4) {
-        const rVal = cap.data[i], gVal = cap.data[i+1], bVal = cap.data[i+2];
-        if (rVal > 200 && gVal > 160 && bVal > 30) brightCount++;
-      }
-      if (brightCount > 30) {
-        console.log("Bright yellow detected but OCR failed");
-      }
+      try {
+        r = OCR.readSmallChars(cap, OCR.smallChars, colors);
+        if (r && r.text) {
+          const cleaned = r.text.replace(/[^0-9]/g, '');
+          const n = parseInt(cleaned);
+          if (!isNaN(n) && n >= 0) {
+            console.log(`OCR success (smallChars): ${cleaned} → ${n}`);
+            return n;
+          }
+        }
+      } catch(e) { console.log("smallChars error:", e); }
     }
 
-    console.log(`OCR failed at x=${x}, y=${y}`);
+    if (OCR && OCR.readLine && OCR.smallChars) {
+      try {
+        r = OCR.readLine(cap, OCR.smallChars, colors);
+        if (r && r.text) {
+          const cleaned = r.text.replace(/[^0-9]/g, '');
+          const n = parseInt(cleaned);
+          if (!isNaN(n) && n >= 0) {
+            console.log(`OCR success (readLine): ${cleaned} → ${n}`);
+            return n;
+          }
+        }
+      } catch(e) { console.log("readLine error:", e); }
+    }
+
+    // Fallback: count bright yellow pixels
+    let brightCount = 0;
+    for (let i = 0; i < cap.data.length; i += 4) {
+      const rVal = cap.data[i], gVal = cap.data[i+1], bVal = cap.data[i+2];
+      if (rVal > 180 && gVal > 140 && bVal > 20 && rVal > gVal && gVal > bVal) {
+        brightCount++;
+      }
+    }
+    if (brightCount > 60) {
+      console.log(`Fallback: ${brightCount} bright pixels detected at x=${x}, y=${y}`);
+      return -1; // Flag as "likely non-zero" – you can treat as 1 or adjust manually
+    }
+
+    console.log(`OCR failed at x=${x}, y=${y} - brightCount=${brightCount}`);
     return null;
   } catch(e) {
-    console.error("OCR error:", e);
+    console.error("OCR global error:", e);
     return null;
   }
 }
@@ -449,6 +468,10 @@ async function scanMaterialStorage() {
     {start:35,  dy: offsetY + 518 + 8 }
   ];
 
+  console.log("=== STARTING FULL SCAN ===");
+  console.log("Window:", absX, absY);
+  console.log("Tuners:", offsetX, offsetY, horizStep, iconW, numH);
+
   for (let row of ROWS) {
     const numY = absY + row.dy;
     const totalRowWidth = (5 * horizStep) - (horizStep - iconW) + 20;
@@ -475,7 +498,7 @@ async function scanMaterialStorage() {
 
   alt1.overLayRefreshGroup('0');
   showOCRRes(results);
-  out.innerHTML = `Detected ${good} / 40 materials.<br>Green boxes = capture areas. Yellow = row.<br>Check browser console (F12) for per-material debug info.`;
+  out.innerHTML = `Detected ${good} / 40 materials.<br>Green boxes = capture areas. Yellow = row.<br>Check browser console (F12) for detailed debug info.`;
 }
 
 function showOCRRes(parsed){
@@ -494,7 +517,7 @@ function showOCRRes(parsed){
 }
 
 // ────────────────────────────────────────────────────────────────
-// The rest of your original code (load/save/render/etc.) remains below unchanged
+// The rest of your original code (load/save/render/etc.) – unchanged
 // ────────────────────────────────────────────────────────────────
 function load(){
   try{const s=localStorage.getItem(KEY);if(s)S=JSON.parse(s);}catch(e){}
