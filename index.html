@@ -13,154 +13,113 @@
   <script src="https://www.unpkg.com/alt1/dist/ocr/index.js"></script>
   <script src="https://www.unpkg.com/alt1/dist/chatbox/index.js"></script>
   <style>
-    :root {
-      --bg: #0c0b09; --surface: #141210; --surface2: #1c1a14;
-      --border: #2e2618; --border2: #3d3220;
-      --accent: #c8952a; --accent2: #8fbf6a; --accent3: #5ba8d4;
-      --dim: #6b5b3e; --text: #e8dcc8; --muted: #7a6a50;
-      --danger: #bf4a3a;
-      --zarosian: #9b59b6; --zamorakian: #c0392b; --saradominist: #2980b9;
-      --armadylean: #27ae60; --bandosian: #d35400; --dragonkin: #c0006a; --agnostic: #7f8c8d;
+    :root{
+      --bg:#0c0b09;--surface:#141210;--surface2:#1c1a14;
+      --border:#2e2618;--border2:#3d3220;
+      --accent:#c8952a;--accent2:#8fbf6a;--accent3:#5ba8d4;
+      --dim:#6b5b3e;--text:#e8dcc8;--muted:#7a6a50;
+      --danger:#bf4a3a;
+      --zarosian:#9b59b6;--zamorakian:#c0392b;--saradominist:#2980b9;
+      --armadylean:#27ae60;--bandosian:#d35400;--dragonkin:#c0006a;--agnostic:#7f8c8d;
     }
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      background: var(--bg); color: var(--text); font-family: 'Share Tech Mono', monospace; font-size: 11px;
-      height: 100vh; display: flex; flex-direction: column; overflow: hidden;
-    }
-    header {
-      background: linear-gradient(135deg, #1a1510, #221c12, #1a1510);
-      border-bottom: 1px solid var(--accent); padding: 5px 9px;
-      display: flex; align-items: center; gap: 7px; flex-shrink: 0;
-    }
-    header h1 {
-      font-family: 'Cinzel', serif; font-size: 13px; color: var(--accent); letter-spacing: .08em; flex: 1;
-    }
-    .badge {
-      font-size: 9px; color: var(--muted); border: 1px solid var(--border2); padding: 1px 5px; border-radius: 2px;
-    }
-    .badge.ok { color: var(--accent2); border-color: var(--accent2); }
-    .tabs {
-      display: flex; background: var(--surface); border-bottom: 1px solid var(--border); flex-shrink: 0;
-    }
-    .tab {
-      flex: 1; padding: 5px 0; text-align: center; cursor: pointer; color: var(--muted);
-      border-bottom: 2px solid transparent; transition: all .15s; font-size: 9px; letter-spacing: .05em;
-    }
-    .tab:hover { color: var(--text); }
-    .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
-    .toolbar {
-      display: flex; gap: 4px; padding: 4px 7px; background: var(--surface);
-      border-bottom: 1px solid var(--border); flex-shrink: 0; align-items: center; flex-wrap: wrap;
-    }
-    .toolbar input[type=text], .toolbar input[type=number] {
-      background: var(--bg); border: 1px solid var(--border); color: var(--text);
-      padding: 3px 5px; font-family: inherit; font-size: 10px; border-radius: 2px;
-    }
-    .toolbar input:focus { outline: none; border-color: var(--accent); }
-    select {
-      background: var(--bg); border: 1px solid var(--border); color: var(--text);
-      padding: 3px 4px; font-family: inherit; font-size: 10px; border-radius: 2px;
-    }
-    .f1 { flex: 1; min-width: 70px; }
-    .btn {
-      background: var(--border); border: 1px solid var(--border2); color: var(--text);
-      padding: 3px 7px; font-family: inherit; font-size: 10px; cursor: pointer; border-radius: 2px;
-      transition: background .1s; white-space: nowrap;
-    }
-    .btn:hover { background: var(--border2); }
-    .btn.pri { background: #2e2008; border-color: var(--accent); color: var(--accent); }
-    .btn.pri:hover { background: #3e2e0c; }
-    .btn.suc { background: #0d2008; border-color: var(--accent2); color: var(--accent2); }
-    .btn.suc:hover { background: #1a3010; }
-    .btn.dan { background: #200808; border-color: var(--danger); color: var(--danger); }
-    .btn-xs {
-      background: var(--border); border: none; color: var(--text); width: 16px; height: 16px;
-      display: flex; align-items: center; justify-content: center; cursor: pointer;
-      border-radius: 2px; font-size: 13px; line-height: 1; flex-shrink: 0;
-    }
-    .btn-xs:hover { background: var(--dim); }
-    .panel { display: none; flex: 1; overflow: hidden; flex-direction: column; }
-    .panel.active { display: flex; }
-    .scroll {
-      flex: 1; overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--border) var(--bg);
-    }
-    .scroll::-webkit-scrollbar { width: 4px; }
-    .scroll::-webkit-scrollbar-track { background: var(--bg); }
-    .scroll::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
-    table { width: 100%; border-collapse: collapse; }
-    thead th {
-      background: var(--surface); color: var(--muted); font-size: 9px; padding: 4px 6px;
-      text-align: left; position: sticky; top: 0; z-index: 2; border-bottom: 1px solid var(--border); letter-spacing: .06em;
-    }
-    tbody tr { border-bottom: 1px solid #18160f; }
-    tbody tr:nth-child(even) { background: #0f0d09; }
-    tbody tr:hover { background: #1a1810; }
-    td { padding: 3px 6px; vertical-align: middle; }
-    .cdot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; display: inline-block; }
-    .mn { display: flex; align-items: center; gap: 5px; }
-    .cc { display: flex; align-items: center; justify-content: flex-end; gap: 2px; }
-    .cv { min-width: 42px; text-align: right; color: var(--accent); }
-    .ci {
-      width: 50px; background: var(--bg); border: 1px solid var(--accent); color: var(--accent);
-      text-align: right; font-family: inherit; font-size: 10px; padding: 1px 3px; border-radius: 2px;
-    }
-    .ci:focus { outline: none; }
-    .gi {
-      width: 50px; background: var(--bg); border: 1px solid var(--border); color: var(--text);
-      text-align: right; font-family: inherit; font-size: 10px; padding: 1px 3px; border-radius: 2px;
-    }
-    .gi:focus { outline: none; border-color: var(--accent); }
-    .pw { width: 46px; height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; }
-    .pb { height: 100%; border-radius: 2px; transition: width .3s; }
-    .pb.low { background: var(--danger); }
-    .pb.mid { background: var(--accent); }
-    .pb.full { background: var(--accent2); }
-    .art-card { background: var(--surface2); border: 1px solid var(--border); border-radius: 3px; margin: 5px; padding: 7px; }
-    .art-head { display: flex; align-items: center; gap: 6px; margin-bottom: 5px; flex-wrap: wrap; }
-    .art-name { font-family: 'Cinzel', serif; font-size: 11px; color: var(--accent); flex: 1; }
-    .art-lvl { font-size: 9px; color: var(--muted); background: var(--border); padding: 1px 5px; border-radius: 2px; }
-    .art-xp { font-size: 9px; color: var(--accent3); }
-    .mr { display: flex; align-items: center; gap: 5px; padding: 2px 0; font-size: 10px; }
-    .mr .need { color: var(--muted); margin-left: auto; white-space: nowrap; }
-    .mr .have { font-weight: bold; }
-    .mr.ok .have { color: var(--accent2); }
-    .mr.bad .have { color: var(--danger); }
-    .art-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 5px; padding-top: 4px; border-top: 1px solid var(--border); }
-    .art-can { color: var(--accent2); font-size: 10px; }
-    .art-cant { color: var(--danger); font-size: 10px; }
-    .site-hdr {
-      background: var(--surface); padding: 4px 8px; font-family: 'Cinzel', serif;
-      font-size: 10px; color: var(--accent2); border-bottom: 1px solid var(--border); letter-spacing: .08em;
-      position: sticky; top: 0; z-index: 1;
-    }
-    .sg { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding: 7px; }
-    .sc { background: var(--surface2); border: 1px solid var(--border); border-radius: 3px; padding: 7px; }
-    .sc h3 { font-family: 'Cinzel', serif; font-size: 10px; color: var(--accent); margin-bottom: 5px; }
-    .sr { display: flex; justify-content: space-between; padding: 2px 0; font-size: 10px; border-bottom: 1px solid var(--border); }
-    .sr:last-child { border-bottom: none; }
-    .sv { color: var(--accent); }
-    .sw { grid-column: 1/-1; }
-    .oa { padding: 8px; display: flex; flex-direction: column; gap: 6px; }
-    .op {
-      background: var(--surface2); border: 1px solid var(--border); border-radius: 3px;
-      padding: 6px; min-height: 70px; font-size: 10px; color: var(--text); white-space: pre-wrap;
-      font-family: inherit; overflow-y: auto; max-height: 180px;
-    }
-    .oh { color: var(--muted); font-size: 9px; line-height: 1.5; }
-    .sf { animation: flash .4s ease-out; }
-    @keyframes flash { 0% { background: #2a1e08 } 100% { background: var(--surface2) } }
-    .status-bar {
-      background: var(--surface); border-top: 1px solid var(--border);
-      padding: 3px 9px; font-size: 9px; color: var(--muted); display: flex; gap: 10px; flex-shrink: 0;
-    }
-    .status-bar span { color: var(--text); }
-    .legend { display: flex; flex-wrap: wrap; gap: 5px; padding: 4px 7px; border-top: 1px solid var(--border); flex-shrink: 0; }
-    .li { display: flex; align-items: center; gap: 3px; font-size: 9px; color: var(--muted); }
-    textarea {
-      width: 100%; background: var(--surface2); border: 1px solid var(--border); color: var(--text);
-      font-family: inherit; font-size: 10px; padding: 6px; border-radius: 3px; resize: vertical; min-height: 80px;
-    }
-    textarea:focus { outline: none; border-color: var(--accent); }
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{background:var(--bg);color:var(--text);font-family:'Share Tech Mono',monospace;font-size:11px;
+         height:100vh;display:flex;flex-direction:column;overflow:hidden}
+    header{background:linear-gradient(135deg,#1a1510,#221c12,#1a1510);
+           border-bottom:1px solid var(--accent);padding:5px 9px;
+           display:flex;align-items:center;gap:7px;flex-shrink:0}
+    header h1{font-family:'Cinzel',serif;font-size:13px;color:var(--accent);letter-spacing:.08em;flex:1}
+    .badge{font-size:9px;color:var(--muted);border:1px solid var(--border2);padding:1px 5px;border-radius:2px}
+    .badge.ok{color:var(--accent2);border-color:var(--accent2)}
+    .tabs{display:flex;background:var(--surface);border-bottom:1px solid var(--border);flex-shrink:0}
+    .tab{flex:1;padding:5px 0;text-align:center;cursor:pointer;color:var(--muted);
+         border-bottom:2px solid transparent;transition:all .15s;font-size:9px;letter-spacing:.05em}
+    .tab:hover{color:var(--text)}
+    .tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+    .toolbar{display:flex;gap:4px;padding:4px 7px;background:var(--surface);
+             border-bottom:1px solid var(--border);flex-shrink:0;align-items:center;flex-wrap:wrap}
+    .toolbar input[type=text],.toolbar input[type=number]{
+      background:var(--bg);border:1px solid var(--border);color:var(--text);
+      padding:3px 5px;font-family:inherit;font-size:10px;border-radius:2px}
+    .toolbar input:focus{outline:none;border-color:var(--accent)}
+    select{background:var(--bg);border:1px solid var(--border);color:var(--text);
+           padding:3px 4px;font-family:inherit;font-size:10px;border-radius:2px}
+    .f1{flex:1;min-width:70px}
+    .btn{background:var(--border);border:1px solid var(--border2);color:var(--text);
+         padding:3px 7px;font-family:inherit;font-size:10px;cursor:pointer;border-radius:2px;
+         transition:background .1s;white-space:nowrap}
+    .btn:hover{background:var(--border2)}
+    .btn.pri{background:#2e2008;border-color:var(--accent);color:var(--accent)}
+    .btn.pri:hover{background:#3e2e0c}
+    .btn.suc{background:#0d2008;border-color:var(--accent2);color:var(--accent2)}
+    .btn.suc:hover{background:#1a3010}
+    .btn.dan{background:#200808;border-color:var(--danger);color:var(--danger)}
+    .btn-xs{background:var(--border);border:none;color:var(--text);width:16px;height:16px;
+            display:flex;align-items:center;justify-content:center;cursor:pointer;
+            border-radius:2px;font-size:13px;line-height:1;flex-shrink:0}
+    .btn-xs:hover{background:var(--dim)}
+    .panel{display:none;flex:1;overflow:hidden;flex-direction:column}
+    .panel.active{display:flex}
+    .scroll{flex:1;overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--border) var(--bg)}
+    .scroll::-webkit-scrollbar{width:4px}
+    .scroll::-webkit-scrollbar-track{background:var(--bg)}
+    .scroll::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+    table{width:100%;border-collapse:collapse}
+    thead th{background:var(--surface);color:var(--muted);font-size:9px;padding:4px 6px;
+             text-align:left;position:sticky;top:0;z-index:2;border-bottom:1px solid var(--border);letter-spacing:.06em}
+    tbody tr{border-bottom:1px solid #18160f}
+    tbody tr:nth-child(even){background:#0f0d09}
+    tbody tr:hover{background:#1a1810}
+    td{padding:3px 6px;vertical-align:middle}
+    .cdot{width:6px;height:6px;border-radius:50%;flex-shrink:0;display:inline-block}
+    .mn{display:flex;align-items:center;gap:5px}
+    .cc{display:flex;align-items:center;justify-content:flex-end;gap:2px}
+    .cv{min-width:42px;text-align:right;color:var(--accent)}
+    .ci{width:50px;background:var(--bg);border:1px solid var(--accent);color:var(--accent);
+        text-align:right;font-family:inherit;font-size:10px;padding:1px 3px;border-radius:2px}
+    .ci:focus{outline:none}
+    .gi{width:50px;background:var(--bg);border:1px solid var(--border);color:var(--text);
+        text-align:right;font-family:inherit;font-size:10px;padding:1px 3px;border-radius:2px}
+    .gi:focus{outline:none;border-color:var(--accent)}
+    .pw{width:46px;height:4px;background:var(--border);border-radius:2px;overflow:hidden}
+    .pb{height:100%;border-radius:2px;transition:width .3s}
+    .pb.low{background:var(--danger)}.pb.mid{background:var(--accent)}.pb.full{background:var(--accent2)}
+    .art-card{background:var(--surface2);border:1px solid var(--border);border-radius:3px;margin:5px;padding:7px}
+    .art-head{display:flex;align-items:center;gap:6px;margin-bottom:5px;flex-wrap:wrap}
+    .art-name{font-family:'Cinzel',serif;font-size:11px;color:var(--accent);flex:1}
+    .art-lvl{font-size:9px;color:var(--muted);background:var(--border);padding:1px 5px;border-radius:2px}
+    .art-xp{font-size:9px;color:var(--accent3)}
+    .mr{display:flex;align-items:center;gap:5px;padding:2px 0;font-size:10px}
+    .mr .need{color:var(--muted);margin-left:auto;white-space:nowrap}
+    .mr .have{font-weight:bold}
+    .mr.ok .have{color:var(--accent2)}.mr.bad .have{color:var(--danger)}
+    .art-footer{display:flex;justify-content:space-between;align-items:center;margin-top:5px;padding-top:4px;border-top:1px solid var(--border)}
+    .art-can{color:var(--accent2);font-size:10px}.art-cant{color:var(--danger);font-size:10px}
+    .site-hdr{background:var(--surface);padding:4px 8px;font-family:'Cinzel',serif;
+              font-size:10px;color:var(--accent2);border-bottom:1px solid var(--border);letter-spacing:.08em;
+              position:sticky;top:0;z-index:1}
+    .sg{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:7px}
+    .sc{background:var(--surface2);border:1px solid var(--border);border-radius:3px;padding:7px}
+    .sc h3{font-family:'Cinzel',serif;font-size:10px;color:var(--accent);margin-bottom:5px}
+    .sr{display:flex;justify-content:space-between;padding:2px 0;font-size:10px;border-bottom:1px solid var(--border)}
+    .sr:last-child{border-bottom:none}
+    .sv{color:var(--accent)}
+    .sw{grid-column:1/-1}
+    .oa{padding:8px;display:flex;flex-direction:column;gap:6px}
+    .op{background:var(--surface2);border:1px solid var(--border);border-radius:3px;
+        padding:6px;min-height:70px;font-size:10px;color:var(--text);white-space:pre-wrap;
+        font-family:inherit;overflow-y:auto;max-height:180px}
+    .oh{color:var(--muted);font-size:9px;line-height:1.5}
+    .sf{animation:flash .4s ease-out}
+    @keyframes flash{0%{background:#2a1e08}100%{background:var(--surface2)}}
+    .status-bar{background:var(--surface);border-top:1px solid var(--border);
+                padding:3px 9px;font-size:9px;color:var(--muted);display:flex;gap:10px;flex-shrink:0}
+    .status-bar span{color:var(--text)}
+    .legend{display:flex;flex-wrap:wrap;gap:5px;padding:4px 7px;border-top:1px solid var(--border);flex-shrink:0}
+    .li{display:flex;align-items:center;gap:3px;font-size:9px;color:var(--muted)}
+    textarea{width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);
+             font-family:inherit;font-size:10px;padding:6px;border-radius:3px;resize:vertical;min-height:80px}
+    textarea:focus{outline:none;border-color:var(--accent)}
   </style>
 </head>
 <body>
@@ -246,16 +205,17 @@
 
 <div class="panel" id="panel-ocr">
   <div class="oa">
-    <p class="oh">1. Open Material Storage in RS3<br>2. Click Locate Window, enter top-left X/Y + size (500×342 px)<br>3. Tune offsets if needed → Scan</p>
+    <p class="oh">1. Open Material Storage<br>2. Locate window (top-left + 500×342 px)<br>3. Tune if needed<br>4. Scroll to top → Scan Top<br>5. Scroll down → Scan Bottom</p>
     <div style="display:flex;gap:5px;align-items:center;flex-wrap:wrap;margin-bottom:2px">
       <button class="btn" id="btn-locate">🎯 Locate Window</button>
       <span id="locate-status" style="font-size:9px;color:var(--muted)">Window not set</span>
     </div>
-    <div style="display:flex;gap:5px">
-      <button class="btn pri" id="btn-scan">📷 Scan Screen</button>
+    <div style="display:flex;gap:8px;margin:10px 0;flex-wrap:wrap">
+      <button class="btn pri" id="btn-scan-top">Scan Top (1–3)</button>
+      <button class="btn pri" id="btn-scan-bottom">Scan Bottom (4–8)</button>
       <button class="btn" id="btn-manual-ocr">✏ Manual Paste</button>
     </div>
-    <textarea id="paste-box" placeholder="Paste material text here (e.g. 'Third Age iron 1,240')…" style="display:none"></textarea>
+    <textarea id="paste-box" placeholder="Paste material text here…" style="display:none"></textarea>
     <button class="btn" id="btn-parse-paste" style="display:none">Parse Text</button>
     <div class="op" id="ocr-out">No scan yet.</div>
     <div id="ocr-results" style="display:none">
@@ -277,8 +237,14 @@
 </div>
 
 <script>
-const CULTURE_COL = {Agnostic:'#7f8c8d',Zarosian:'#9b59b6',Zamorakian:'#c0392b',
-  Saradominist:'#2980b9',Armadylean:'#27ae60',Bandosian:'#d35400',Dragonkin:'#c0006a'};
+// ────────────────────────────────────────────────
+// Constants & Data
+// ────────────────────────────────────────────────
+const CULTURE_COL = {
+  Agnostic:'#7f8c8d', Zarosian:'#9b59b6', Zamorakian:'#c0392b',
+  Saradominist:'#2980b9', Armadylean:'#27ae60', Bandosian:'#d35400', Dragonkin:'#c0006a'
+};
+
 const MATS = [
   {name:"Third Age iron",lv:5,c:"Agnostic"},{name:"Zarosian insignia",lv:5,c:"Zarosian"},
   {name:"Samite silk",lv:12,c:"Agnostic"},{name:"Imperial steel",lv:12,c:"Zarosian"},
@@ -301,6 +267,7 @@ const MATS = [
   {name:"Praesulic essence (magic)",lv:87,c:"Zarosian"},{name:"Quintessence",lv:87,c:"Dragonkin"},
   {name:"Imbued slate",lv:90,c:"Dragonkin"},{name:"Warforged bronze",lv:93,c:"Bandosian"},
 ];
+
 const ARTEFACTS = [
   {name:"Centurion's dress sword",site:"Kharid-et",lv:5,xp:500,mats:{"Third Age iron":16,"Zarosian insignia":14}},
   {name:"Legionary sword",site:"Kharid-et",lv:5,xp:500,mats:{"Third Age iron":20,"Zarosian insignia":10}},
@@ -347,6 +314,17 @@ const ARTEFACTS = [
   {name:"Zarosian warstaff",site:"Senntisten",lv:87,xp:22000,mats:{"Praesulic essence (magic)":32,"Zaryte fragments":26,"Imbued slate":16}},
 ];
 
+const STORAGE_ORDER = [
+  'Third Age iron','Samite silk','White oak','Goldrune','Orthenglass',
+  'Vellum','Leather scraps','Soapstone','Animal furs','Fossilised bone',
+  'Stormguard steel','Wings of War','Armadylean yellow','Aetherium alloy','Quintessence',
+  'Malachite green','Mark of the Kyzaj','Vulcanised rubber','Warforged bronze','Yu\'biusk clay',
+  'Dragon metal','Orgone','Compass rose','Carbon black','Felt',
+  'Keramos','White marble','Cobalt blue','Everlight silvthril','Star of Saradomin',
+  'Cadmium red','Chaotic brimstone','Demonhide','Eye of Dagon','Hellfire metal',
+  'Zarosian insignia','Imperial steel','Ancient vis','Tyrian purple','Blood of Orcus'
+];
+
 const KEY = 'archtracker_v3';
 let S = {counts:{},goals:{},session:null};
 let ocrParsed = {};
@@ -361,17 +339,9 @@ let iconW = 48;
 let numH = 44;
 let horizStep = 49;
 
-const STORAGE_ORDER = [
-  'Third Age iron','Samite silk','White oak','Goldrune','Orthenglass',
-  'Vellum','Leather scraps','Soapstone','Animal furs','Fossilised bone',
-  'Stormguard steel','Wings of War','Armadylean yellow','Aetherium alloy','Quintessence',
-  'Malachite green','Mark of the Kyzaj','Vulcanised rubber','Warforged bronze',"Yu'biusk clay",
-  'Dragon metal','Orgone','Compass rose','Carbon black','Felt',
-  'Keramos','White marble','Cobalt blue','Everlight silvthril','Star of Saradomin',
-  'Cadmium red','Chaotic brimstone','Demonhide','Eye of Dagon','Hellfire metal',
-  'Zarosian insignia','Imperial steel','Ancient vis','Tyrian purple','Blood of Orcus',
-];
-
+// ────────────────────────────────────────────────
+// OCR read function
+// ────────────────────────────────────────────────
 function readNumberAt(x, y, w, h) {
   try {
     const captureW = 60;
@@ -433,19 +403,22 @@ function readNumberAt(x, y, w, h) {
     }
 
     if (brightCount > 50) {
-      console.log(`Fallback: ${brightCount} bright pixels detected at x=${x}, y=${y} - assuming non-zero`);
-      return 1; // placeholder
+      console.log(`Fallback: ${brightCount} bright pixels at x=${x}, y=${y} - returning 1`);
+      return 1;
     }
 
     console.log(`OCR failed at x=${x}, y=${y} - brightCount=${brightCount}`);
     return null;
   } catch(e) {
-    console.error("OCR global error:", e);
+    console.error("OCR error:", e);
     return null;
   }
 }
 
-async function scanMaterialStorage() {
+// ────────────────────────────────────────────────
+// Scanning logic
+// ────────────────────────────────────────────────
+async function performScan(startIdx, endIdx, label) {
   const out = document.getElementById('ocr-out');
   if (!storedWinX || !storedWinY) {
     out.textContent = 'Locate window first.';
@@ -453,57 +426,12 @@ async function scanMaterialStorage() {
   }
   const absX = storedWinX, absY = storedWinY;
 
-  // Draw big yellow validation box around the full known window size
+  // Big yellow validation box
   if (storedWinWidth && storedWinHeight) {
-    alt1.overLayRect(A1lib.mixColor(255, 200, 0), absX, absY, storedWinWidth, storedWinHeight, 5000, 3);
-    console.log(`Drew big yellow validation box: ${absX},${absY} - ${storedWinWidth}×${storedWinHeight}`);
-  } else {
-    console.log("No stored window size - skipping big validation box");
+    alt1.overLayRect(A1lib.mixColor(255, 200, 0), absX, absY, storedWinWidth, storedWinHeight, 4000, 3);
   }
 
-  let tuners = document.getElementById('tuners');
-  if (!tuners) {
-    tuners = document.createElement('div');
-    tuners.id = 'tuners';
-    tuners.style.cssText = 'display:flex;gap:6px;align-items:center;margin:6px 0;font-size:9px;color:var(--muted);flex-wrap:wrap';
-    tuners.innerHTML = `
-      X offset: <input id="t-x" type="number" min="-20" max="50" style="width:50px;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:2px"/>
-      Y offset: <input id="t-y" type="number" min="40" max="120" style="width:50px;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:2px"/>
-      Step: <input id="t-step" type="number" min="40" max="60" style="width:50px;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:2px"/>
-      W: <input id="t-w" type="number" min="30" max="70" style="width:45px;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:2px"/>
-      H: <input id="t-h" type="number" min="30" max="70" style="width:45px;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:2px"/>
-      <button class="btn suc" id="t-rescan" style="font-size:10px;padding:2px 6px">Re-Scan</button>
-    `;
-    const oa = document.querySelector('.oa');
-    oa.insertBefore(tuners, document.getElementById('btn-scan').parentNode.nextSibling);
-    
-    const saved = JSON.parse(localStorage.getItem('archOcrTuners') || '{}');
-    offsetX   = saved.offsetX   ?? 6;
-    offsetY   = saved.offsetY   ?? 62;
-    horizStep = saved.horizStep ?? 49;
-    iconW     = saved.iconW     ?? 48;
-    numH      = saved.numH      ?? 44;
-    document.getElementById('t-x').value = offsetX;
-    document.getElementById('t-y').value = offsetY;
-    document.getElementById('t-step').value = horizStep;
-    document.getElementById('t-w').value = iconW;
-    document.getElementById('t-h').value = numH;
-
-    const inputs = ['t-x','t-y','t-step','t-w','t-h'];
-    inputs.forEach(id => {
-      document.getElementById(id).addEventListener('input', e => {
-        if (id === 't-x') offsetX = parseInt(e.target.value) || 6;
-        if (id === 't-y') offsetY = parseInt(e.target.value) || 62;
-        if (id === 't-step') horizStep = parseInt(e.target.value) || 49;
-        if (id === 't-w') iconW = parseInt(e.target.value) || 48;
-        if (id === 't-h') numH = parseInt(e.target.value) || 44;
-        localStorage.setItem('archOcrTuners', JSON.stringify({offsetX, offsetY, horizStep, iconW, numH}));
-      });
-    });
-    document.getElementById('t-rescan').addEventListener('click', scanMaterialStorage);
-  }
-
-  out.textContent = 'Scanning all materials...';
+  out.textContent = `Scanning ${label}...`;
   const results = {};
   let good = 0;
 
@@ -518,17 +446,15 @@ async function scanMaterialStorage() {
     {start:35,  dy: offsetY + 518 + 8 }
   ];
 
-  console.log("=== STARTING FULL SCAN ===");
-  console.log("Window:", absX, absY, storedWinWidth, storedWinHeight);
-  console.log("Tuners:", offsetX, offsetY, horizStep, iconW, numH);
+  console.log(`=== ${label.toUpperCase()} SCAN (${startIdx}–${endIdx}) ===`);
 
   for (let row of ROWS) {
     const numY = absY + row.dy;
-    const totalRowWidth = (5 * horizStep) - (horizStep - iconW) + 20;
-    alt1.overLayRect(A1lib.mixColor(255,255,0), absX + 2, numY - 4, totalRowWidth, numH + 8, 2500, 1);
 
     for (let slot = 0; slot < 5; slot++) {
       const idx = row.start + slot;
+      if (idx < startIdx || idx > endIdx) continue;
+
       const mat = STORAGE_ORDER[idx];
       if (!mat) continue;
 
@@ -536,7 +462,7 @@ async function scanMaterialStorage() {
       alt1.overLayRect(A1lib.mixColor(0,255,0), numX - 1, numY - 2, iconW + 2, numH + 4, 2500, 1);
 
       const num = await readNumberAt(numX, numY - 1, iconW, numH);
-      console.log(`${mat.padEnd(25)} | x=${numX}, y=${numY-1} | result=${num ?? 'null'}`);
+      console.log(`${mat.padEnd(25)} | x=${numX}, y=${numY-1} | ${num ?? 'null'}`);
 
       if (num !== null && num >= 0) {
         results[mat] = num;
@@ -547,16 +473,29 @@ async function scanMaterialStorage() {
   }
 
   alt1.overLayRefreshGroup('0');
-  showOCRRes(results);
-  out.innerHTML = `Detected ${good} / 40 materials.<br>Green boxes = capture areas. Yellow = row.<br>Big yellow box shows full 500×342 interface area.`;
+
+  Object.assign(ocrParsed, results);
+  showOCRRes(ocrParsed);
+
+  out.innerHTML = `Added ${good} materials from ${label}.<br>Total: ${Object.keys(ocrParsed).length}<br>Run the other scan then Apply.`;
 }
 
+function scanTop() {
+  performScan(0, 19, "Top (1–3)");
+}
+
+function scanBottom() {
+  performScan(20, 39, "Bottom (4–8)");
+}
+
+// ────────────────────────────────────────────────
+// Results UI
+// ────────────────────────────────────────────────
 function showOCRRes(parsed){
-  ocrParsed = parsed;
   const keys = Object.keys(parsed).filter(k => parsed[k] > 0);
   document.getElementById('ocr-summary').textContent = keys.length 
-    ? `Detected ${keys.length} non-zero material(s):` 
-    : 'All materials read (showing non-zero only).';
+    ? `Detected ${keys.length} non-zero:` 
+    : 'No non-zero values yet.';
   document.getElementById('ocr-match-list').innerHTML = keys.map(k =>
     `<div style="display:flex;justify-content:space-between;padding:2px 0;border-bottom:1px solid var(--border)">
        <span style="color:var(--accent2)">${k}</span>
@@ -566,14 +505,121 @@ function showOCRRes(parsed){
   document.getElementById('ocr-results').style.display = 'block';
 }
 
-// ────────────────────────────────────────────────────────────────
-// Remaining original functions (load, save, renderMats, etc.) follow below
-// ────────────────────────────────────────────────────────────────
+// ────────────────────────────────────────────────
+// Locate window + tuners
+// ────────────────────────────────────────────────
+function startLocate(){
+  const status = document.getElementById('locate-status');
+  const btn = document.getElementById('btn-locate');
+  const existing = document.getElementById('coord-input');
+  if (existing) { existing.remove(); return; }
+
+  const div = document.createElement('div');
+  div.id = 'coord-input';
+  div.style.cssText = 'display:flex;gap:6px;align-items:center;margin-top:6px;flex-wrap:wrap';
+  div.innerHTML = `
+    <span style="font-size:9px;color:var(--muted)">Top-left X:</span>
+    <input type="number" id="coord-x" style="width:70px;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:2px" placeholder="e.g. 555" value="${storedWinX || ''}">
+    <span style="font-size:9px;color:var(--muted)">Y:</span>
+    <input type="number" id="coord-y" style="width:70px;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:2px" placeholder="e.g. 285" value="${storedWinY || ''}">
+    <span style="font-size:9px;color:var(--muted)">Width (px):</span>
+    <input type="number" id="coord-w" style="width:80px;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:2px" placeholder="500" value="${storedWinWidth}">
+    <span style="font-size:9px;color:var(--muted)">Height (px):</span>
+    <input type="number" id="coord-h" style="width:80px;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:2px" placeholder="342" value="${storedWinHeight}">
+    <button class="btn suc" id="btn-coord-set" style="font-size:9px;padding:3px 8px">Set & Save</button>
+    <button class="btn" id="btn-validate" style="font-size:9px;padding:3px 8px">Validate Box</button>
+  `;
+  btn.parentNode.insertBefore(div, btn.nextSibling);
+
+  document.getElementById('btn-coord-set').addEventListener('click', () => {
+    const x = parseInt(document.getElementById('coord-x').value);
+    const y = parseInt(document.getElementById('coord-y').value);
+    const w = parseInt(document.getElementById('coord-w').value);
+    const h = parseInt(document.getElementById('coord-h').value);
+
+    if (isNaN(x) || isNaN(y) || isNaN(w) || isNaN(h) || x <= 0 || y <= 0 || w < 400 || h < 300) {
+      status.textContent = 'Enter valid numbers';
+      status.style.color = 'var(--danger)';
+      return;
+    }
+
+    storedWinX = x; storedWinY = y;
+    storedWinWidth = w; storedWinHeight = h;
+
+    localStorage.setItem('archStorageWinX', x);
+    localStorage.setItem('archStorageWinY', y);
+    localStorage.setItem('archStorageWinWidth', w);
+    localStorage.setItem('archStorageWinHeight', h);
+
+    status.textContent = `Saved: (${x}, ${y}) - ${w}×${h} px`;
+    status.style.color = 'var(--accent2)';
+    div.remove();
+  });
+
+  document.getElementById('btn-validate').addEventListener('click', () => {
+    if (!storedWinX || !storedWinY) {
+      status.textContent = 'Set coordinates first';
+      return;
+    }
+    alt1.overLayRect(A1lib.mixColor(255,200,0), storedWinX, storedWinY, storedWinWidth, storedWinHeight, 8000, 3);
+    status.textContent = 'Yellow box drawn – check alignment';
+  });
+}
+
+// Tuners panel
+function initTuners() {
+  if (document.getElementById('tuners')) return;
+
+  const tuners = document.createElement('div');
+  tuners.id = 'tuners';
+  tuners.style.cssText = 'display:flex;gap:6px;align-items:center;margin:6px 0;font-size:9px;color:var(--muted);flex-wrap:wrap';
+  tuners.innerHTML = `
+    X offset: <input id="t-x" type="number" min="-20" max="50" style="width:50px;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:2px"/>
+    Y offset: <input id="t-y" type="number" min="40" max="120" style="width:50px;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:2px"/>
+    Step: <input id="t-step" type="number" min="40" max="60" style="width:50px;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:2px"/>
+    W: <input id="t-w" type="number" min="30" max="70" style="width:45px;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:2px"/>
+    H: <input id="t-h" type="number" min="30" max="70" style="width:45px;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:2px"/>
+    <button class="btn suc" id="t-rescan" style="font-size:10px;padding:2px 6px">Re-Scan Top</button>
+  `;
+  const oa = document.querySelector('.oa');
+  oa.insertBefore(tuners, document.getElementById('btn-scan-top').parentNode.nextSibling);
+
+  const saved = JSON.parse(localStorage.getItem('archOcrTuners') || '{}');
+  offsetX   = saved.offsetX   ?? 6;
+  offsetY   = saved.offsetY   ?? 62;
+  horizStep = saved.horizStep ?? 49;
+  iconW     = saved.iconW     ?? 48;
+  numH      = saved.numH      ?? 44;
+
+  document.getElementById('t-x').value = offsetX;
+  document.getElementById('t-y').value = offsetY;
+  document.getElementById('t-step').value = horizStep;
+  document.getElementById('t-w').value = iconW;
+  document.getElementById('t-h').value = numH;
+
+  const inputs = ['t-x','t-y','t-step','t-w','t-h'];
+  inputs.forEach(id => {
+    document.getElementById(id).addEventListener('input', e => {
+      if (id === 't-x') offsetX = parseInt(e.target.value) || 6;
+      if (id === 't-y') offsetY = parseInt(e.target.value) || 62;
+      if (id === 't-step') horizStep = parseInt(e.target.value) || 49;
+      if (id === 't-w') iconW = parseInt(e.target.value) || 48;
+      if (id === 't-h') numH = parseInt(e.target.value) || 44;
+      localStorage.setItem('archOcrTuners', JSON.stringify({offsetX, offsetY, horizStep, iconW, numH}));
+    });
+  });
+  document.getElementById('t-rescan').addEventListener('click', scanTop);
+}
+
+// ────────────────────────────────────────────────
+// Core logic (your original functions)
+// ────────────────────────────────────────────────
 function load(){
   try{const s=localStorage.getItem(KEY);if(s)S=JSON.parse(s);}catch(e){}
   MATS.forEach(m=>{if(S.counts[m.name]==null)S.counts[m.name]=0;if(S.goals[m.name]==null)S.goals[m.name]=0;});
   if(S.session==null)S.session=null;
 }
+
 function save(){localStorage.setItem(KEY,JSON.stringify(S));updateStatus();}
 
 function filteredMats(){
@@ -697,9 +743,8 @@ function fmtElapsed(ms){
 function tickSession(){
   if(!sessStart)return;
   const el=Date.now()-sessStart;
-  const h=Math.floor(el/3600000),m=Math.floor((el%3600000)/60000),s=Math.floor((el%60000)/1000);
   document.getElementById('sess-timer').textContent=
-    `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+    `${String(Math.floor(el/3600000)).padStart(2,'0')}:${String(Math.floor((el%3600000)/60000)).padStart(2,'0')}:${String(Math.floor((el%60000)/1000)).padStart(2,'0')}`;
   const totalXp=sessRestores.reduce((a,r)=>a+r.xp,0);
   const elHr=(Date.now()-sessStart)/3600000;
   document.getElementById('s-arts').textContent=sessRestores.length;
@@ -767,69 +812,6 @@ document.getElementById('btn-sess-reset').addEventListener('click',()=>{
   document.getElementById('recent-restores').textContent='';
 });
 
-function startLocate(){
-  const status = document.getElementById('locate-status');
-  const btn = document.getElementById('btn-locate');
-  const existing = document.getElementById('coord-input');
-  if (existing) { existing.remove(); return; }
-
-  const div = document.createElement('div');
-  div.id = 'coord-input';
-  div.style.cssText = 'display:flex;gap:6px;align-items:center;margin-top:6px;flex-wrap:wrap';
-  div.innerHTML = `
-    <span style="font-size:9px;color:var(--muted)">Top-left X:</span>
-    <input type="number" id="coord-x" style="width:70px;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:2px" placeholder="e.g. 555" value="${storedWinX || ''}">
-    <span style="font-size:9px;color:var(--muted)">Y:</span>
-    <input type="number" id="coord-y" style="width:70px;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:2px" placeholder="e.g. 285" value="${storedWinY || ''}">
-    <span style="font-size:9px;color:var(--muted)">Width (px):</span>
-    <input type="number" id="coord-w" style="width:80px;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:2px" placeholder="500" value="${storedWinWidth}">
-    <span style="font-size:9px;color:var(--muted)">Height (px):</span>
-    <input type="number" id="coord-h" style="width:80px;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:2px" placeholder="342" value="${storedWinHeight}">
-    <button class="btn suc" id="btn-coord-set" style="font-size:9px;padding:3px 8px">Set & Save</button>
-    <button class="btn" id="btn-validate" style="font-size:9px;padding:3px 8px">Validate Box</button>
-    <span style="font-size:9px;color:var(--muted)">(measure once via screenshot)</span>
-  `;
-  btn.parentNode.insertBefore(div, btn.nextSibling);
-
-  document.getElementById('btn-coord-set').addEventListener('click', () => {
-    const x = parseInt(document.getElementById('coord-x').value);
-    const y = parseInt(document.getElementById('coord-y').value);
-    const w = parseInt(document.getElementById('coord-w').value);
-    const h = parseInt(document.getElementById('coord-h').value);
-
-    if (isNaN(x) || isNaN(y) || isNaN(w) || isNaN(h) || x <= 0 || y <= 0 || w < 400 || h < 300) {
-      status.textContent = 'Enter valid numbers (width/height at least ~400×300)';
-      status.style.color = 'var(--danger)';
-      return;
-    }
-
-    storedWinX = x;
-    storedWinY = y;
-    storedWinWidth = w;
-    storedWinHeight = h;
-
-    localStorage.setItem('archStorageWinX', x);
-    localStorage.setItem('archStorageWinY', y);
-    localStorage.setItem('archStorageWinWidth', w);
-    localStorage.setItem('archStorageWinHeight', h);
-
-    status.textContent = `Saved: (${x}, ${y}) - ${w}×${h} px ✔ Ready to scan`;
-    status.style.color = 'var(--accent2)';
-    div.remove();
-  });
-
-  document.getElementById('btn-validate').addEventListener('click', () => {
-    if (!storedWinX || !storedWinY || !storedWinWidth || !storedWinHeight) {
-      status.textContent = 'Set coordinates and size first';
-      status.style.color = 'var(--danger)';
-      return;
-    }
-    alt1.overLayRect(A1lib.mixColor(255, 200, 0), storedWinX, storedWinY, storedWinWidth, storedWinHeight, 8000, 3);
-    status.textContent = 'Big yellow box drawn — check if it exactly fits the Material Storage window';
-    status.style.color = 'var(--accent)';
-  });
-}
-
 function updateStatus(){
   let total=0,types=0,met=0,goaled=0;
   MATS.forEach(m=>{
@@ -842,6 +824,9 @@ function updateStatus(){
   document.getElementById('s-canrest').textContent=ARTEFACTS.filter(canRestore).length;
 }
 
+// ────────────────────────────────────────────────
+// Event listeners & init
+// ────────────────────────────────────────────────
 document.querySelectorAll('.tab').forEach(tab=>{
   tab.addEventListener('click',()=>{
     document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
@@ -853,46 +838,36 @@ document.querySelectorAll('.tab').forEach(tab=>{
   });
 });
 
-function initAlt1(){
-  const b=document.getElementById('alt1-badge');
-  if(window.alt1){
-    A1lib.identifyApp("appconfig.json");
-    b.textContent='Alt1 ✔';b.classList.add('ok');
-  }
-}
-
-function restoreSession(){
-  if(S.session&&S.session.start){
-    sessStart=S.session.start;sessSnap=S.session.snap||{};sessRestores=S.session.restores||[];
-    document.getElementById('btn-sess-start').textContent='⏸ Running…';
-    document.getElementById('btn-sess-start').disabled=true;
-    if(sessInterval)clearInterval(sessInterval);
-    sessInterval=setInterval(tickSession,1000);tickSession();
-    const el=document.getElementById('recent-restores');
-    el.innerHTML=sessRestores.slice(-5).reverse().map(r=>
-      `<div style="padding:1px 0">${r.name} <span style="color:var(--accent3)">+${r.xp.toLocaleString()} xp</span></div>`).join('');
-  }
-}
-
-load();renderMats();renderLegend();renderArts();updateStatus();restoreSession();
-window.addEventListener('load',()=>{
-  if(typeof A1lib!=='undefined') initAlt1();
-  else document.getElementById('alt1-badge').textContent='Alt1 not detected';
+document.getElementById('btn-scan-top').addEventListener('click', () => {
+  initTuners();
+  scanTop();
 });
-
-document.getElementById('btn-scan').addEventListener('click', scanMaterialStorage);
+document.getElementById('btn-scan-bottom').addEventListener('click', scanBottom);
 document.getElementById('btn-locate').addEventListener('click', startLocate);
 document.getElementById('btn-ocr-apply').addEventListener('click',()=>{
   Object.entries(ocrParsed).forEach(([m,v])=>{if(S.counts[m]!=null)S.counts[m]=v;});
   save();renderMats();renderArts();renderSessionMats();
   document.getElementById('ocr-results').style.display='none';
-  document.getElementById('ocr-out').textContent='✔ Applied '+Object.keys(ocrParsed).length+' material values.';
+  document.getElementById('ocr-out').textContent='Applied detected values.';
   ocrParsed={};
 });
 document.getElementById('btn-ocr-discard').addEventListener('click',()=>{
   document.getElementById('ocr-results').style.display='none';
   document.getElementById('ocr-out').textContent='Discarded.';ocrParsed={};
 });
+
+// Initial load
+load();
+renderMats();
+renderLegend();
+renderArts();
+updateStatus();
+
+// Alt1 badge
+if(window.alt1){
+  document.getElementById('alt1-badge').textContent='Alt1 ✔';
+  document.getElementById('alt1-badge').classList.add('ok');
+}
 </script>
 </body>
 </html>
