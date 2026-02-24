@@ -593,39 +593,47 @@ function colorMatch(px, tr, tg, tb, tolerance){
 // Title TEXT is bright gold: approx rgb(239,227,177)
 function findStorageWindow(imgData){
   const w=imgData.width, h=imgData.height;
-  // RS3 Material Storage window has:
-  // - A dark brown title bar background: approx rgb(54,42,22)
-  // - Gold title text: approx rgb(239,227,177)
-  // - The title bar is ~18px tall
-  // - The window content area is ~380px wide, ~400px tall
-  // We scan each row for a band of gold pixels that matches the title width
-  // "MATERIAL STORAGE" text is ~155px wide at default scale
+  // Strategy: scan for the dark brown title bar background of RS3 windows
+  // Title bar bg is approx rgb(54,42,22) to rgb(70,55,30)
+  // We look for a horizontal band of this colour that is ~270-420px wide
+  // (Material Storage window is ~280px wide)
+  // Then verify by checking for light text pixels within that band
+
+  let bestMatch = null;
+
   for(let y=10;y<h-300;y++){
-    // Count gold pixels in this row
-    let goldStart=-1, goldEnd=-1, goldCount=0;
+    // Count dark-brown title bar background pixels
+    let brownStart=-1, brownEnd=-1, brownCount=0;
     for(let x=0;x<w;x++){
       const px=getPixel(imgData,x,y);
-      if(colorMatch(px,239,227,177,20)){
-        if(goldStart===-1) goldStart=x;
-        goldEnd=x;
-        goldCount++;
+      // Dark brown RS3 title bar - try a range of brown shades
+      const isBrown = (
+        colorMatch(px,54,42,22,18) ||
+        colorMatch(px,62,49,26,18) ||
+        colorMatch(px,70,55,30,18) ||
+        colorMatch(px,46,36,18,18) ||
+        colorMatch(px,58,46,24,18)
+      );
+      if(isBrown){
+        if(brownStart===-1) brownStart=x;
+        brownEnd=x;
+        brownCount++;
+      } else if(brownStart!==-1 && x-brownEnd>20){
+        // Gap too large, reset
+        brownStart=-1; brownEnd=-1; brownCount=0;
       }
     }
-    const goldSpan = goldEnd - goldStart;
-    // "MATERIAL STORAGE" spans roughly 130-200px of gold pixels
-    // and goldCount should be between 20-80 (actual letter pixels, not solid band)
-    if(goldCount>=20 && goldCount<=100 && goldSpan>=100 && goldSpan<=250){
-      // Verify this looks like a title bar by checking the background colour
-      // just to the left of the text is dark brown
-      const bgPx = getPixel(imgData, Math.max(0,goldStart-5), y);
-      if(colorMatch(bgPx, 54,42,22, 30) || colorMatch(bgPx, 40,32,16, 30) || colorMatch(bgPx,30,24,12,30)){
-        // Found it — window left edge is goldStart minus ~8px padding
-        return {x: goldStart - 8, y: y - 4};
+    const brownSpan = brownEnd - brownStart;
+    // Material Storage window title bar is ~270-290px wide
+    if(brownCount>200 && brownSpan>=240 && brownSpan<=380){
+      // Check there are light/white pixels inside (the title text)
+      let textPixels=0;
+      for(let x=brownStart;x<=brownEnd;x++){
+        const px=getPixel(imgData,x,y);
+        if(px[0]>180 && px[1]>170 && px[2]>140) textPixels++;
       }
-      // Even without bg match, if the span looks right, use it
-      // (bg colour varies by RS3 theme)
-      if(goldSpan>=130 && goldSpan<=200 && goldCount>=25 && goldCount<=70){
-        return {x: goldStart - 8, y: y - 4};
+      if(textPixels>=8 && textPixels<=80){
+        return {x: brownStart, y: y};
       }
     }
   }
