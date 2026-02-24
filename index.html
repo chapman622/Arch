@@ -331,13 +331,11 @@ const STORAGE_ORDER = [
 
 function readNumberAt(x, y, w, h) {
   try {
-    // Larger capture for better context
     const captureW = 60;
     const captureH = 50;
     const cap = A1lib.capture(x - 6, y - 7, captureW, captureH);
     if (!cap) return null;
 
-    // Ultra-broad RS3 yellow palette
     const colors = [
       [255,255,255], [255,240,180], [255,230,150], [255,220,120],
       [255,210,100], [255,200,80],  [255,190,60],  [255,180,40],
@@ -350,7 +348,8 @@ function readNumberAt(x, y, w, h) {
       [255,240,160], [240,190,70],  [255,200,90],  [230,200,100],
       [255,230,140], [245,205,80],  [255,210,110], [230,190,70],
       [240,220,130], [255,245,180], [235,195,90],  [255,235,140],
-      [245,210,110], [230,180,80],  [255,220,90]
+      [245,210,110], [230,180,80],  [255,220,90],  [240,195,100],
+      [255,230,130], [245,200,90],  [230,170,70]
     ];
 
     let r;
@@ -382,7 +381,6 @@ function readNumberAt(x, y, w, h) {
       } catch(e) { console.log("readLine error:", e); }
     }
 
-    // Fallback: count bright yellow pixels
     let brightCount = 0;
     for (let i = 0; i < cap.data.length; i += 4) {
       const rVal = cap.data[i], gVal = cap.data[i+1], bVal = cap.data[i+2];
@@ -390,9 +388,10 @@ function readNumberAt(x, y, w, h) {
         brightCount++;
       }
     }
-    if (brightCount > 60) {
-      console.log(`Fallback: ${brightCount} bright pixels detected at x=${x}, y=${y}`);
-      return -1; // Flag as "likely non-zero" – you can treat as 1 or adjust manually
+
+    if (brightCount > 50) {  // lowered from 60 to catch more
+      console.log(`Fallback: ${brightCount} bright pixels detected at x=${x}, y=${y} - assuming non-zero`);
+      return 1; // placeholder value - you can change to 100 or estimate later
     }
 
     console.log(`OCR failed at x=${x}, y=${y} - brightCount=${brightCount}`);
@@ -420,8 +419,8 @@ async function scanMaterialStorage() {
       X offset: <input id="t-x" type="number" min="-20" max="50" style="width:50px;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:2px"/>
       Y offset: <input id="t-y" type="number" min="40" max="120" style="width:50px;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:2px"/>
       Step: <input id="t-step" type="number" min="40" max="60" style="width:50px;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:2px"/>
-      W: <input id="t-w" type="number" min="30" max="60" style="width:45px;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:2px"/>
-      H: <input id="t-h" type="number" min="30" max="60" style="width:45px;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:2px"/>
+      W: <input id="t-w" type="number" min="30" max="70" style="width:45px;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:2px"/>
+      H: <input id="t-h" type="number" min="30" max="70" style="width:45px;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:2px"/>
       <button class="btn suc" id="t-rescan" style="font-size:10px;padding:2px 6px">Re-Scan</button>
     `;
     const oa = document.querySelector('.oa');
@@ -517,7 +516,7 @@ function showOCRRes(parsed){
 }
 
 // ────────────────────────────────────────────────────────────────
-// The rest of your original code (load/save/render/etc.) – unchanged
+// Rest of your original code (load/save/render/etc.) – unchanged
 // ────────────────────────────────────────────────────────────────
 function load(){
   try{const s=localStorage.getItem(KEY);if(s)S=JSON.parse(s);}catch(e){}
@@ -727,7 +726,7 @@ function startLocate(){
   div.style.cssText='display:flex;gap:4px;align-items:center;margin-top:4px;flex-wrap:wrap';
   div.innerHTML=
     '<span style="font-size:9px;color:var(--muted)">X:</span>'+
-    '<input type="number" id="coord-x" style="width:55px;background:var(--bg);border:1px solid var(--border);color:var(--text);font-family:inherit;font-size:10px;padding:2px 4px;border-radius:2px" placeholder="e.g. 556"/>'+
+    '<input type="number" id="coord-x" style="width:55px;background:var(--bg);border:1px solid var(--border);color:var(--text);font-family:inherit;font-size:10px;padding:2px 4px;border-radius:2px" placeholder="e.g. 555"/>'+
     '<span style="font-size:9px;color:var(--muted)">Y:</span>'+
     '<input type="number" id="coord-y" style="width:55px;background:var(--bg);border:1px solid var(--border);color:var(--text);font-family:inherit;font-size:10px;padding:2px 4px;border-radius:2px" placeholder="e.g. 285"/>'+
     '<button class="btn suc" id="btn-coord-set" style="font-size:9px;padding:2px 6px">Set</button>'+
