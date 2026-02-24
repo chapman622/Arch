@@ -375,11 +375,11 @@ let storedWinY = parseInt(localStorage.getItem('archStorageWinY')) || null;
 let storedWinWidth = parseInt(localStorage.getItem('archStorageWinWidth')) || 500;
 let storedWinHeight = parseInt(localStorage.getItem('archStorageWinHeight')) || 342;
 let offsetX = 8;
-let offsetY = 85;
+let offsetY = 72;
 let iconW = 52;
 let numH = 48;
 let horizStep = 49;
-let rowStep = 74;
+let rowStep = 72;
 
 // ────────────────────────────────────────────────
 // OCR read function
@@ -387,8 +387,8 @@ let rowStep = 74;
 function readNumberAt(x, y) {
   try {
     const captureW = 84;
-    const captureH = 72;
-    const cap = A1lib.capture(x - 18, y - 25, captureW, captureH);
+    const captureH = 80;
+    const cap = A1lib.capture(x - 18, y - 35, captureW, captureH);
     if (!cap) return null;
 
     const colors = [
@@ -630,7 +630,7 @@ function initTuners() {
 
   const saved = JSON.parse(localStorage.getItem('archOcrTuners') || '{}');
   offsetX   = saved.offsetX   ?? 8;
-  offsetY   = saved.offsetY   ?? 85;
+  offsetY   = saved.offsetY   ?? 72;
   horizStep = saved.horizStep ?? 49;
   iconW     = saved.iconW     ?? 52;
   numH      = saved.numH      ?? 48;
@@ -645,7 +645,7 @@ function initTuners() {
   inputs.forEach(id => {
     document.getElementById(id).addEventListener('input', e => {
       if (id === 't-x') offsetX = parseInt(e.target.value) || 8;
-      if (id === 't-y') offsetY = parseInt(e.target.value) || 85;
+      if (id === 't-y') offsetY = parseInt(e.target.value) || 72;
       if (id === 't-step') horizStep = parseInt(e.target.value) || 49;
       if (id === 't-w') iconW = parseInt(e.target.value) || 52;
       if (id === 't-h') numH = parseInt(e.target.value) || 48;
