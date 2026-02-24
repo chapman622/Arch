@@ -374,20 +374,21 @@ let storedWinX = parseInt(localStorage.getItem('archStorageWinX')) || null;
 let storedWinY = parseInt(localStorage.getItem('archStorageWinY')) || null;
 let storedWinWidth = parseInt(localStorage.getItem('archStorageWinWidth')) || 500;
 let storedWinHeight = parseInt(localStorage.getItem('archStorageWinHeight')) || 342;
-let offsetX = 6;
-let offsetY = 62;
-let iconW = 48;
-let numH = 44;
+let offsetX = 8;
+let offsetY = 85;
+let iconW = 52;
+let numH = 48;
 let horizStep = 49;
+let rowStep = 74;
 
 // ────────────────────────────────────────────────
 // OCR read function
 // ────────────────────────────────────────────────
 function readNumberAt(x, y) {
   try {
-    const captureW = 80;
-    const captureH = 60;
-    const cap = A1lib.capture(x - 12, y - 14, captureW, captureH);
+    const captureW = 84;
+    const captureH = 72;
+    const cap = A1lib.capture(x - 18, y - 25, captureW, captureH);
     if (!cap) return null;
 
     const colors = [
@@ -406,7 +407,8 @@ function readNumberAt(x, y) {
       [255,230,130], [245,200,90],  [230,170,70],
       [255,245,200], [255,235,180], [255,225,160], [255,215,140],
       [240,220,160], [240,210,140], [230,200,120], [220,190,100],
-      [255,250,220], [255,240,200], [245,230,180], [235,220,160]
+      [255,250,220], [255,240,200], [245,230,180], [235,220,160],
+      [255,255,220], [255,255,180], [255,255,140]
     ];
 
     let r;
@@ -416,12 +418,9 @@ function readNumberAt(x, y) {
         if (r && r.text) {
           const cleaned = r.text.replace(/[^0-9]/g, '');
           const n = parseInt(cleaned);
-          if (!isNaN(n) && n >= 0) {
-            console.log(`OCR success (smallChars): ${cleaned} → ${n}`);
-            return n;
-          }
+          if (!isNaN(n) && n >= 0) return n;
         }
-      } catch(e) { console.log("smallChars error:", e); }
+      } catch(e) {}
     }
 
     if (OCR && OCR.readLine && OCR.smallChars) {
@@ -430,12 +429,9 @@ function readNumberAt(x, y) {
         if (r && r.text) {
           const cleaned = r.text.replace(/[^0-9]/g, '');
           const n = parseInt(cleaned);
-          if (!isNaN(n) && n >= 0) {
-            console.log(`OCR success (readLine): ${cleaned} → ${n}`);
-            return n;
-          }
+          if (!isNaN(n) && n >= 0) return n;
         }
-      } catch(e) { console.log("readLine error:", e); }
+      } catch(e) {}
     }
 
     let brightCount = 0;
@@ -447,20 +443,17 @@ function readNumberAt(x, y) {
     }
 
     if (brightCount > 25) {
-      console.log(`Fallback: ${brightCount} bright pixels at x=${x}, y=${y} - assuming non-zero`);
       return 1;
     }
 
-    console.log(`OCR failed at x=${x}, y=${y} - brightCount=${brightCount}`);
     return null;
   } catch(e) {
-    console.error("OCR global error:", e);
     return null;
   }
 }
 
 // ────────────────────────────────────────────────
-// Scanning logic - First row = 10 items
+// Scanning logic
 // ────────────────────────────────────────────────
 async function performScan(startIdx, endIdx, label) {
   const out = document.getElementById('ocr-out');
@@ -480,14 +473,14 @@ async function performScan(startIdx, endIdx, label) {
   let good = 0;
 
   const ROWS = [
-    { dy: offsetY +  0   },
-    { dy: offsetY + 74   },
-    { dy: offsetY + 148  },
-    { dy: offsetY + 222  },
-    { dy: offsetY + 296  },
-    { dy: offsetY + 370 + 8 },
-    { dy: offsetY + 444 + 8 },
-    { dy: offsetY + 518 + 8 }
+    { dy: offsetY + 0 * rowStep },
+    { dy: offsetY + 1 * rowStep },
+    { dy: offsetY + 2 * rowStep },
+    { dy: offsetY + 3 * rowStep },
+    { dy: offsetY + 4 * rowStep },
+    { dy: offsetY + 5 * rowStep },
+    { dy: offsetY + 6 * rowStep },
+    { dy: offsetY + 7 * rowStep }
   ];
 
   console.log(`=== STARTING ${label.toUpperCase()} SCAN (${startIdx}–${endIdx}) ===`);
@@ -626,21 +619,21 @@ function initTuners() {
   tuners.style.cssText = 'display:flex;gap:6px;align-items:center;margin:6px 0;font-size:9px;color:var(--muted);flex-wrap:wrap';
   tuners.innerHTML = `
     X offset: <input id="t-x" type="number" min="-20" max="50" style="width:50px;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:2px"/>
-    Y offset: <input id="t-y" type="number" min="40" max="120" style="width:50px;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:2px"/>
-    Step: <input id="t-step" type="number" min="40" max="60" style="width:50px;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:2px"/>
-    W: <input id="t-w" type="number" min="30" max="70" style="width:45px;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:2px"/>
-    H: <input id="t-h" type="number" min="30" max="70" style="width:45px;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:2px"/>
+    Y offset: <input id="t-y" type="number" min="30" max="120" style="width:50px;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:2px"/>
+    Step: <input id="t-step" type="number" min="60" max="90" style="width:50px;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:2px"/>
+    W: <input id="t-w" type="number" min="40" max="70" style="width:45px;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:2px"/>
+    H: <input id="t-h" type="number" min="40" max="80" style="width:45px;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:2px"/>
     <button class="btn suc" id="t-rescan-top" style="font-size:10px;padding:2px 6px">Re-Scan Top</button>
   `;
   const oa = document.querySelector('.oa');
   oa.insertBefore(tuners, document.getElementById('btn-scan-top').parentNode.nextSibling);
 
   const saved = JSON.parse(localStorage.getItem('archOcrTuners') || '{}');
-  offsetX   = saved.offsetX   ?? 6;
-  offsetY   = saved.offsetY   ?? 62;
+  offsetX   = saved.offsetX   ?? 8;
+  offsetY   = saved.offsetY   ?? 85;
   horizStep = saved.horizStep ?? 49;
-  iconW     = saved.iconW     ?? 48;
-  numH      = saved.numH      ?? 44;
+  iconW     = saved.iconW     ?? 52;
+  numH      = saved.numH      ?? 48;
 
   document.getElementById('t-x').value = offsetX;
   document.getElementById('t-y').value = offsetY;
@@ -651,11 +644,11 @@ function initTuners() {
   const inputs = ['t-x','t-y','t-step','t-w','t-h'];
   inputs.forEach(id => {
     document.getElementById(id).addEventListener('input', e => {
-      if (id === 't-x') offsetX = parseInt(e.target.value) || 6;
-      if (id === 't-y') offsetY = parseInt(e.target.value) || 62;
+      if (id === 't-x') offsetX = parseInt(e.target.value) || 8;
+      if (id === 't-y') offsetY = parseInt(e.target.value) || 85;
       if (id === 't-step') horizStep = parseInt(e.target.value) || 49;
-      if (id === 't-w') iconW = parseInt(e.target.value) || 48;
-      if (id === 't-h') numH = parseInt(e.target.value) || 44;
+      if (id === 't-w') iconW = parseInt(e.target.value) || 52;
+      if (id === 't-h') numH = parseInt(e.target.value) || 48;
       localStorage.setItem('archOcrTuners', JSON.stringify({offsetX, offsetY, horizStep, iconW, numH}));
     });
   });
