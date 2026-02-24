@@ -669,7 +669,7 @@ async function scanMaterialStorage(){
       return segs;
     }
 
-    const numY=absY+50;
+    const numY=absY+65;
     const yellow=A1lib.mixColor(255,199,0);
     const green=A1lib.mixColor(100,255,100);
     const red=A1lib.mixColor(255,80,80);
@@ -689,7 +689,7 @@ async function scanMaterialStorage(){
       lines.push(STORAGE_ORDER[i].substring(0,12)+': '+segStr);
     }
 
-    alt1.overLayRefreshGroup(0);
+    alt1.overLayRefreshGroup('0');
     out.textContent='Segment analysis (expected: 1879,634,3877,2775,108):\n\n'+lines.join('\n');
   }catch(e){out.textContent='Error: '+e.message;}
 }
