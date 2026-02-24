@@ -268,7 +268,6 @@ const MATS=[
   {name:"Imbued slate",lv:90,c:"Dragonkin"},{name:"Warforged bronze",lv:93,c:"Bandosian"},
 ];
 const ARTEFACTS=[
-  // Kharid-et
   {name:"Centurion's dress sword",site:"Kharid-et",lv:5,xp:500,mats:{"Third Age iron":16,"Zarosian insignia":14}},
   {name:"Legionary sword",site:"Kharid-et",lv:5,xp:500,mats:{"Third Age iron":20,"Zarosian insignia":10}},
   {name:"Zarosian chalice",site:"Kharid-et",lv:12,xp:1000,mats:{"Third Age iron":20,"Samite silk":14,"Zarosian insignia":12}},
@@ -281,7 +280,6 @@ const ARTEFACTS=[
   {name:"Zarosian prayer scroll",site:"Kharid-et",lv:25,xp:3200,mats:{"Vellum":24,"Ancient vis":18,"Zarosian insignia":14}},
   {name:"Pontifex signet ring",site:"Kharid-et",lv:40,xp:5400,mats:{"Goldrune":30,"Blood of Orcus":20,"Tyrian purple":18}},
   {name:"Kharid-et journal",site:"Kharid-et",lv:58,xp:9000,mats:{"Blood of Orcus":28,"Ancient vis":22,"Tyrian purple":16}},
-  // Infernal Source
   {name:"Camel mask",site:"Infernal Source",lv:24,xp:2000,mats:{"Leather scraps":22,"Cadmium red":14,"Demonhide":12}},
   {name:"Demonic skull",site:"Infernal Source",lv:29,xp:2800,mats:{"Demonhide":24,"Chaotic brimstone":16,"Eye of Dagon":12}},
   {name:"Ritual candle",site:"Infernal Source",lv:29,xp:2800,mats:{"Hellfire metal":22,"Cadmium red":16,"Chaotic brimstone":14}},
@@ -289,7 +287,6 @@ const ARTEFACTS=[
   {name:"Zamorakian sigil",site:"Infernal Source",lv:36,xp:3800,mats:{"Hellfire metal":28,"Chaotic brimstone":20,"Demonhide":12}},
   {name:"Infernal staff",site:"Infernal Source",lv:42,xp:5000,mats:{"Hellfire metal":30,"Eye of Dagon":22,"Cadmium red":18}},
   {name:"Demon cook book",site:"Infernal Source",lv:42,xp:5000,mats:{"Leather scraps":26,"Demonhide":20,"Cadmium red":16}},
-  // Everlight
   {name:"Hallowed lantern",site:"Everlight",lv:42,xp:4600,mats:{"Keramos":28,"White marble":20,"Cobalt blue":14}},
   {name:"Saradomin icon",site:"Everlight",lv:42,xp:4600,mats:{"White marble":26,"Keramos":18,"Cobalt blue":16}},
   {name:"Amphora",site:"Everlight",lv:48,xp:6000,mats:{"Keramos":34,"Cobalt blue":22,"White marble":14}},
@@ -297,43 +294,36 @@ const ARTEFACTS=[
   {name:"Light box",site:"Everlight",lv:51,xp:7200,mats:{"Everlight silvthril":28,"Cobalt blue":22,"Keramos":16}},
   {name:"Legionary's shield",site:"Everlight",lv:58,xp:9200,mats:{"Everlight silvthril":36,"Star of Saradomin":24,"Blood of Orcus":16}},
   {name:"Saradomin's light",site:"Everlight",lv:60,xp:10000,mats:{"Star of Saradomin":30,"Everlight silvthril":26,"Cobalt blue":18}},
-  // Stormguard Citadel
   {name:"Stormguard journal",site:"Stormguard Citadel",lv:70,xp:11000,mats:{"Stormguard steel":32,"Wings of War":24,"Armadylean yellow":16}},
   {name:"Armadylean device",site:"Stormguard Citadel",lv:70,xp:11000,mats:{"Wings of War":30,"Stormguard steel":26,"Armadylean yellow":18}},
   {name:"Wingsuit v1",site:"Stormguard Citadel",lv:70,xp:11500,mats:{"Stormguard steel":28,"Wings of War":22,"Armadylean yellow":20}},
   {name:"Howl's workshop notes",site:"Stormguard Citadel",lv:76,xp:14000,mats:{"Stormguard steel":38,"Wings of War":28,"Armadylean yellow":20}},
-  // Warforge
   {name:"Bandosian goblin totem",site:"Warforge",lv:76,xp:12500,mats:{"Malachite green":30,"Mark of the Kyzaj":22,"Vulcanised rubber":16}},
   {name:"Goblin keg",site:"Warforge",lv:76,xp:12500,mats:{"Vulcanised rubber":28,"Malachite green":24,"Mark of the Kyzaj":14}},
   {name:"Warforge barricade",site:"Warforge",lv:76,xp:12500,mats:{"Plate of the Crucible":30,"Malachite green":22,"Mark of the Kyzaj":16}},
   {name:"Big High War God idol",site:"Warforge",lv:81,xp:16000,mats:{"Mark of the Kyzaj":34,"Malachite green":26,"Zaryte fragments":16}},
   {name:"Warforged weapon",site:"Warforge",lv:93,xp:22000,mats:{"Warforged bronze":36,"Plate of the Crucible":24,"Malachite green":18}},
-  // Daemonheim
   {name:"Dungeoneering journal",site:"Daemonheim",lv:58,xp:8000,mats:{"Blood of Orcus":28,"Soapstone":22,"Orthenglass":14}},
-  // Orthen
   {name:"Dragonkin relic",site:"Orthen",lv:73,xp:13000,mats:{"Dragon metal":34,"Orgone":24,"Quintessence":16}},
   {name:"Dragonkin codex",site:"Orthen",lv:73,xp:13000,mats:{"Dragon metal":30,"Quintessence":22,"Imbued slate":14}},
   {name:"Orthen furnace core",site:"Orthen",lv:87,xp:20000,mats:{"Quintessence":36,"Imbued slate":28,"Dragon metal":20}},
   {name:"Dragonkin laboratory notes",site:"Orthen",lv:90,xp:24000,mats:{"Imbued slate":34,"Quintessence":28,"Orgone":20}},
-  // Senntisten
   {name:"Senntisten goblet",site:"Senntisten",lv:77,xp:15000,mats:{"Zaryte fragments":32,"Praesulic essence (melee)":22,"Goldrune":16}},
   {name:"Praesulic robes",site:"Senntisten",lv:87,xp:22000,mats:{"Praesulic essence (melee)":30,"Praesulic essence (ranged)":24,"Praesulic essence (magic)":18}},
   {name:"Zarosian warstaff",site:"Senntisten",lv:87,xp:22000,mats:{"Praesulic essence (magic)":32,"Zaryte fragments":26,"Imbued slate":16}},
 ];
 
-// STATE
 const KEY='archtracker_v3';
 let S={counts:{},goals:{},session:null};
 let ocrParsed={};
 
-// OCR Settings – updated with your measurements
 let storedWinX = parseInt(localStorage.getItem('archStorageWinX')) || null;
 let storedWinY = parseInt(localStorage.getItem('archStorageWinY')) || null;
 let offsetX = 6;
 let offsetY = 62;
-let iconW = 40;
-let numH = 36;
-let horizStep = 49;  // 40 px box + 9 px gap
+let iconW = 44;
+let numH = 40;
+let horizStep = 49;
 
 const STORAGE_ORDER = [
   'Third Age iron','Samite silk','White oak','Goldrune','Orthenglass',
@@ -355,7 +345,9 @@ function readNumberAt(x, y, w, h) {
       [255,215,0],   [230,190,60], [255,199,0], [255,180,80],
       [220,160,40],  [255,240,140], [245,225,90], [255,230,150],
       [240,200,100], [255,210,120], [230,170,50], [255,245,180],
-      [255,235,120], [245,215,70],  [220,180,90], [255,225,130]
+      [255,235,120], [245,215,70],  [220,180,90], [255,225,130],
+      [255,240,160], [240,190,70],  [255,200,90], [230,200,100],
+      [255,230,140], [245,205,80],  [255,210,110]
     ];
     let r;
     if (OCR && OCR.readSmallChars && OCR.smallChars) {
@@ -380,7 +372,6 @@ async function scanMaterialStorage() {
   }
   const absX = storedWinX, absY = storedWinY;
 
-  // Inject tuner controls
   let tuners = document.getElementById('tuners');
   if (!tuners) {
     tuners = document.createElement('div');
@@ -390,35 +381,33 @@ async function scanMaterialStorage() {
       X offset: <input id="t-x" type="number" min="-20" max="50" style="width:50px;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:2px"/>
       Y offset: <input id="t-y" type="number" min="40" max="120" style="width:50px;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:2px"/>
       Step: <input id="t-step" type="number" min="40" max="60" style="width:50px;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:2px"/>
-      W: <input id="t-w" type="number" min="30" max="50" style="width:45px;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:2px"/>
-      H: <input id="t-h" type="number" min="30" max="50" style="width:45px;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:2px"/>
+      W: <input id="t-w" type="number" min="30" max="60" style="width:45px;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:2px"/>
+      H: <input id="t-h" type="number" min="30" max="60" style="width:45px;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:2px"/>
       <button class="btn suc" id="t-rescan" style="font-size:10px;padding:2px 6px">Re-Scan</button>
     `;
     const oa = document.querySelector('.oa');
     oa.insertBefore(tuners, document.getElementById('btn-scan').parentNode.nextSibling);
     
-    // Load saved values
     const saved = JSON.parse(localStorage.getItem('archOcrTuners') || '{}');
     offsetX   = saved.offsetX   ?? 6;
     offsetY   = saved.offsetY   ?? 62;
     horizStep = saved.horizStep ?? 49;
-    iconW     = saved.iconW     ?? 40;
-    numH      = saved.numH      ?? 36;
+    iconW     = saved.iconW     ?? 44;
+    numH      = saved.numH      ?? 40;
     document.getElementById('t-x').value = offsetX;
     document.getElementById('t-y').value = offsetY;
     document.getElementById('t-step').value = horizStep;
     document.getElementById('t-w').value = iconW;
     document.getElementById('t-h').value = numH;
 
-    // Save on change
     const inputs = ['t-x','t-y','t-step','t-w','t-h'];
     inputs.forEach(id => {
       document.getElementById(id).addEventListener('input', e => {
         if (id === 't-x') offsetX = parseInt(e.target.value) || 6;
         if (id === 't-y') offsetY = parseInt(e.target.value) || 62;
         if (id === 't-step') horizStep = parseInt(e.target.value) || 49;
-        if (id === 't-w') iconW = parseInt(e.target.value) || 40;
-        if (id === 't-h') numH = parseInt(e.target.value) || 36;
+        if (id === 't-w') iconW = parseInt(e.target.value) || 44;
+        if (id === 't-h') numH = parseInt(e.target.value) || 40;
         localStorage.setItem('archOcrTuners', JSON.stringify({offsetX, offsetY, horizStep, iconW, numH}));
       });
     });
@@ -430,14 +419,14 @@ async function scanMaterialStorage() {
   let good = 0;
 
   const ROWS = [
-    {start: 0,  dy: offsetY +  0   },   // Agnostic 1
-    {start: 5,  dy: offsetY + 74   },   // Agnostic 2
-    {start:10,  dy: offsetY + 148  },   // Armadylean
-    {start:15,  dy: offsetY + 222  },   // Bandosian
-    {start:20,  dy: offsetY + 296  },   // Dragonkin
-    {start:25,  dy: offsetY + 370 + 8 }, // Saradominist (+extra for header)
-    {start:30,  dy: offsetY + 444 + 8 }, // Zamorakian
-    {start:35,  dy: offsetY + 518 + 8 }  // Zarosian
+    {start: 0,  dy: offsetY +  0   },
+    {start: 5,  dy: offsetY + 74   },
+    {start:10,  dy: offsetY + 148  },
+    {start:15,  dy: offsetY + 222  },
+    {start:20,  dy: offsetY + 296  },
+    {start:25,  dy: offsetY + 370 + 8 },
+    {start:30,  dy: offsetY + 444 + 8 },
+    {start:35,  dy: offsetY + 518 + 8 }
   ];
 
   for (let row of ROWS) {
@@ -458,7 +447,7 @@ async function scanMaterialStorage() {
         results[mat] = num;
         good++;
       }
-      await new Promise(r => setTimeout(r, 80));
+      await new Promise(r => setTimeout(r, 120));
     }
   }
 
@@ -483,7 +472,7 @@ function showOCRRes(parsed){
 }
 
 // ────────────────────────────────────────────────────────────────
-// Rest of your original script (load, save, renderMats, etc.) remains unchanged below
+// Original functions (load, save, renderMats, etc.) – unchanged
 // ────────────────────────────────────────────────────────────────
 function load(){
   try{const s=localStorage.getItem(KEY);if(s)S=JSON.parse(s);}catch(e){}
@@ -547,7 +536,6 @@ document.getElementById('btn-reset-all').addEventListener('click',()=>{
   MATS.forEach(m=>S.counts[m.name]=0);save();renderMats();renderArts();renderSessionMats();
 });
 
-// ARTEFACTS
 function canRestore(art){return Object.entries(art.mats).every(([m,n])=>(S.counts[m]||0)>=n);}
 function matCulture(name){return MATS.find(x=>x.name===name)?.c||'Agnostic';}
 
@@ -606,7 +594,6 @@ document.getElementById('art-search').addEventListener('input',renderArts);
 document.getElementById('art-site').addEventListener('change',renderArts);
 document.getElementById('art-filter').addEventListener('change',renderArts);
 
-// SESSION
 let sessInterval=null,sessStart=null,sessSnap={},sessRestores=[];
 function fmtElapsed(ms){
   const h=Math.floor(ms/3600000),m=Math.floor((ms%3600000)/60000),s=Math.floor((ms%60000)/1000);
@@ -685,7 +672,6 @@ document.getElementById('btn-sess-reset').addEventListener('click',()=>{
   document.getElementById('recent-restores').textContent='';
 });
 
-// OCR LOCATE
 function startLocate(){
   const status=document.getElementById('locate-status');
   const btn=document.getElementById('btn-locate');
@@ -696,9 +682,9 @@ function startLocate(){
   div.style.cssText='display:flex;gap:4px;align-items:center;margin-top:4px;flex-wrap:wrap';
   div.innerHTML=
     '<span style="font-size:9px;color:var(--muted)">X:</span>'+
-    '<input type="number" id="coord-x" style="width:55px;background:var(--bg);border:1px solid var(--border);color:var(--text);font-family:inherit;font-size:10px;padding:2px 4px;border-radius:2px" placeholder="e.g. 555"/>'+
+    '<input type="number" id="coord-x" style="width:55px;background:var(--bg);border:1px solid var(--border);color:var(--text);font-family:inherit;font-size:10px;padding:2px 4px;border-radius:2px" placeholder="e.g. 556"/>'+
     '<span style="font-size:9px;color:var(--muted)">Y:</span>'+
-    '<input type="number" id="coord-y" style="width:55px;background:var(--bg);border:1px solid var(--border);color:var(--text);font-family:inherit;font-size:10px;padding:2px 4px;border-radius:2px" placeholder="e.g. 283"/>'+
+    '<input type="number" id="coord-y" style="width:55px;background:var(--bg);border:1px solid var(--border);color:var(--text);font-family:inherit;font-size:10px;padding:2px 4px;border-radius:2px" placeholder="e.g. 285"/>'+
     '<button class="btn suc" id="btn-coord-set" style="font-size:9px;padding:2px 6px">Set</button>'+
     '<span style="font-size:9px;color:var(--muted)">(top-left corner of title bar)</span>';
   btn.parentNode.insertBefore(div, btn.nextSibling);
@@ -721,7 +707,6 @@ function startLocate(){
   status.style.color='var(--accent)';
 }
 
-// STATUS
 function updateStatus(){
   let total=0,types=0,met=0,goaled=0;
   MATS.forEach(m=>{
@@ -734,7 +719,6 @@ function updateStatus(){
   document.getElementById('s-canrest').textContent=ARTEFACTS.filter(canRestore).length;
 }
 
-// TABS
 document.querySelectorAll('.tab').forEach(tab=>{
   tab.addEventListener('click',()=>{
     document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
@@ -746,7 +730,6 @@ document.querySelectorAll('.tab').forEach(tab=>{
   });
 });
 
-// ALT1
 function initAlt1(){
   const b=document.getElementById('alt1-badge');
   if(window.alt1){
@@ -755,7 +738,6 @@ function initAlt1(){
   }
 }
 
-// RESTORE SESSION
 function restoreSession(){
   if(S.session&&S.session.start){
     sessStart=S.session.start;sessSnap=S.session.snap||{};sessRestores=S.session.restores||[];
@@ -769,14 +751,12 @@ function restoreSession(){
   }
 }
 
-// INIT
 load();renderMats();renderLegend();renderArts();updateStatus();restoreSession();
 window.addEventListener('load',()=>{
   if(typeof A1lib!=='undefined') initAlt1();
   else document.getElementById('alt1-badge').textContent='Alt1 not detected';
 });
 
-// OCR BUTTONS
 document.getElementById('btn-scan').addEventListener('click', scanMaterialStorage);
 document.getElementById('btn-locate').addEventListener('click', startLocate);
 document.getElementById('btn-ocr-apply').addEventListener('click',()=>{
