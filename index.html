@@ -1400,7 +1400,7 @@
     })();
 
     let colCompletions = JSON.parse(localStorage.getItem("archColCompletions")||"{}");
-    let focusedCollection = null;
+    let focusedCollection = localStorage.getItem("archPinnedCollection") || null;
     let colArtFound = JSON.parse(localStorage.getItem("archColArtFound")||"{}");
     let colArtRestored = JSON.parse(localStorage.getItem("archColArtRestored")||"{}");
 
@@ -1530,6 +1530,7 @@
         b.addEventListener("click", () => {
           const k = b.dataset.pinKey;
           focusedCollection = focusedCollection === k ? null : k;
+          localStorage.setItem("archPinnedCollection", focusedCollection || "");
           scroll.querySelectorAll(".art-card[data-col-key]").forEach(c => {
             const ck = c.dataset.colKey;
             if (focusedCollection === null) {
@@ -1614,8 +1615,8 @@
       }
     }
 
-    document.getElementById("col-search").addEventListener("input", ()=>{ focusedCollection=null; renderCollections(); });
-    document.getElementById("col-filter-collector").addEventListener("change", ()=>{ focusedCollection=null; renderCollections(); });
+    document.getElementById("col-search").addEventListener("input", ()=>{ focusedCollection=null; localStorage.setItem("archPinnedCollection",""); renderCollections(); });
+    document.getElementById("col-filter-collector").addEventListener("change", ()=>{ focusedCollection=null; localStorage.setItem("archPinnedCollection",""); renderCollections(); });
 
     document.querySelectorAll(".tab").forEach(tab=>{
       tab.addEventListener("click", ()=>{
